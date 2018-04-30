@@ -1,0 +1,8 @@
+package: github.com/dpetzold/kube-resource-lister
+import:
+- package: k8s.io/client-go
+  version: v7.0.0
+- package: github.com/davecgh/go-spew
+- package: github.com/ryanuber/columnize
+
+
