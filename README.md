@@ -1,7 +1,7 @@
 Resource lister
 ================
 
-List the resource allocation to pods in a cluster. Inspired by:
+List resource allocation to pods in a cluster. Inspired by:
 
 https://github.com/kubernetes/kubernetes/issues/17512
 
@@ -9,7 +9,7 @@ https://github.com/kubernetes/kubernetes/issues/17512
 
 ## Command Line Options                                                                                                
 * `-namespace` - Limit the query to the specified namespace (defaults to all)
-* `-sort` - Field to sort by. Possible values are: "Name, Namespace, CpuReq, CpuLimit, FractionCpuReq, FractionCpuLimit, MemReq, MemLimit, FractionMemoryReq, FractionMemoryLimit"
+* `-sort` - Field to sort by. Possible values are: "Name, Namespace, CpuReq, CpuLimit, PercentCpuReq, PercentCpuLimit, MemReq, MemLimit, PercentMemoryReq, PercentMemoryLimit"
 * `-reverse` - Reserve the sort order
 
 ## Build
