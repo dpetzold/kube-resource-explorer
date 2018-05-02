@@ -41,6 +41,10 @@ func cmp(r []*ResourceAllocation, field string, i, j int, reverse bool) bool {
 	panic("Unknown type")
 }
 
+func fmtPercent(p int64) string {
+	return fmt.Sprintf("%d%%", p)
+}
+
 func (r *ResourceLister) Print(resourceUsage []*ResourceAllocation, field string, reverse bool) {
 
 	sort.Slice(resourceUsage, func(i, j int) bool {
@@ -57,13 +61,13 @@ func (r *ResourceLister) Print(resourceUsage []*ResourceAllocation, field string
 			u.Namespace,
 			u.Name,
 			u.CpuReq.String(),
-			fmt.Sprintf("%d%%", u.PercentCpuReq),
+			fmtPercent(u.PercentCpuReq),
 			u.CpuLimit.String(),
-			fmt.Sprintf("%d%%", u.PercentCpuLimit),
+			fmtPercent(u.PercentCpuLimit),
 			u.MemReq.String(),
-			fmt.Sprintf("%d%%", u.PercentMemoryReq),
+			fmtPercent(u.PercentMemoryReq),
 			u.MemLimit.String(),
-			fmt.Sprintf("%d%%", u.PercentMemoryLimit),
+			fmtPercent(u.PercentMemoryLimit),
 		}, "| ")
 		rows = append(rows, row)
 	}
