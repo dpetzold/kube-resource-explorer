@@ -19,16 +19,16 @@ type ResourceLister struct {
 }
 
 type ResourceAllocation struct {
-	Name                string
-	Namespace           string
-	CpuReq              resource.Quantity
-	CpuLimit            resource.Quantity
-	FractionCpuReq      int64
-	FractionCpuLimit    int64
-	MemReq              resource.Quantity
-	MemLimit            resource.Quantity
-	FractionMemoryReq   int64
-	FractionMemoryLimit int64
+	Name               string
+	Namespace          string
+	CpuReq             resource.Quantity
+	CpuLimit           resource.Quantity
+	PercentCpuReq      int64
+	PercentCpuLimit    int64
+	MemReq             resource.Quantity
+	MemLimit           resource.Quantity
+	PercentMemoryReq   int64
+	PercentMemoryLimit int64
 }
 
 func (r *ResourceAllocation) getFields() []string {
@@ -105,22 +105,22 @@ func (r *ResourceLister) listNodeResources(name string, namespace string) ([]*Re
 	for _, pod := range nodeNonTerminatedPodsList.Items {
 		req, limit := resourcehelper.PodRequestsAndLimits(&pod)
 		cpuReq, cpuLimit, memoryReq, memoryLimit := req[api_v1.ResourceCPU], limit[api_v1.ResourceCPU], req[api_v1.ResourceMemory], limit[api_v1.ResourceMemory]
-		fractionCpuReq := float64(cpuReq.MilliValue()) / float64(allocatable.Cpu().MilliValue()) * 100
-		fractionCpuLimit := float64(cpuLimit.MilliValue()) / float64(allocatable.Cpu().MilliValue()) * 100
-		fractionMemoryReq := float64(memoryReq.Value()) / float64(allocatable.Memory().Value()) * 100
-		fractionMemoryLimit := float64(memoryLimit.Value()) / float64(allocatable.Memory().Value()) * 100
+		percentCpuReq := float64(cpuReq.MilliValue()) / float64(allocatable.Cpu().MilliValue()) * 100
+		percentCpuLimit := float64(cpuLimit.MilliValue()) / float64(allocatable.Cpu().MilliValue()) * 100
+		percentMemoryReq := float64(memoryReq.Value()) / float64(allocatable.Memory().Value()) * 100
+		percentMemoryLimit := float64(memoryLimit.Value()) / float64(allocatable.Memory().Value()) * 100
 
 		resourceAllocation = append(resourceAllocation, &ResourceAllocation{
-			Name:                pod.GetName(),
-			Namespace:           pod.GetNamespace(),
-			CpuReq:              cpuReq,
-			CpuLimit:            cpuLimit,
-			FractionCpuReq:      int64(fractionCpuReq),
-			FractionCpuLimit:    int64(fractionCpuLimit),
-			MemReq:              memoryReq,
-			MemLimit:            memoryLimit,
-			FractionMemoryReq:   int64(fractionMemoryReq),
-			FractionMemoryLimit: int64(fractionMemoryLimit),
+			Name:               pod.GetName(),
+			Namespace:          pod.GetNamespace(),
+			CpuReq:             cpuReq,
+			CpuLimit:           cpuLimit,
+			PercentCpuReq:      int64(percentCpuReq),
+			PercentCpuLimit:    int64(percentCpuLimit),
+			MemReq:             memoryReq,
+			MemLimit:           memoryLimit,
+			PercentMemoryReq:   int64(percentMemoryReq),
+			PercentMemoryLimit: int64(percentMemoryLimit),
 		})
 	}
 

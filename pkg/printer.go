@@ -60,13 +60,13 @@ func (r *ResourceLister) Print(resourceUsage []*ResourceAllocation, field string
 			u.Namespace,
 			u.Name,
 			u.CpuReq.String(),
-			fmt.Sprintf("%d%%", u.FractionCpuReq),
+			fmt.Sprintf("%d%%", u.PercentCpuReq),
 			u.CpuLimit.String(),
-			fmt.Sprintf("%d%%", u.FractionCpuLimit),
+			fmt.Sprintf("%d%%", u.PercentCpuLimit),
 			u.MemReq.String(),
-			fmt.Sprintf("%d%%", u.FractionMemoryReq),
+			fmt.Sprintf("%d%%", u.PercentMemoryReq),
 			u.MemLimit.String(),
-			fmt.Sprintf("%d%%", u.FractionMemoryLimit),
+			fmt.Sprintf("%d%%", u.PercentMemoryLimit),
 		}, "| ")
 		rows = append(rows, row)
 	}
