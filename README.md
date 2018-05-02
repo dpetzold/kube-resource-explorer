@@ -9,7 +9,7 @@ https://github.com/kubernetes/kubernetes/issues/17512
 
 ## Command Line Options                                                                                                
 * `-namespace` - Limit the query to the specified namespace (defaults to all)
-* `-field` - Field to sort by. Possible values are: "Name, Namespace, CpuReq, CpuLimit, FractionCpuReq, FractionCpuLimit, MemReq, MemLimit, FractionMemoryReq, FractionMemoryLimit"
+* `-sort` - Field to sort by. Possible values are: "Name, Namespace, CpuReq, CpuLimit, FractionCpuReq, FractionCpuLimit, MemReq, MemLimit, FractionMemoryReq, FractionMemoryLimit"
 * `-reverse` - Reserve the sort order
 
 ## Build
@@ -21,7 +21,7 @@ $ make build
 ## Example output
 
 ```
-$ ./resource-lister -namespace kube-system -reverse -field MemReq
+$ ./resource-lister -namespace kube-system -reverse -sort MemReq
 Namespace    Name                                               CpuReq  CpuReq%  CpuLimit  CpuLimit%  MemReq    MemReq%  MemLimit  MemLimit%
 ---------    ----                                               ------  -------  --------  ---------  ------    -------  --------  ---------
 kube-system  event-exporter-v0.1.7-5c4d9556cf-kf4tf             0       0%       0         0%         0         0%       0         0%
