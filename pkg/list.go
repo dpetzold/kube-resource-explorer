@@ -79,9 +79,7 @@ func (r *ResourceLister) listNodeResources(name string, namespace string) ([]*Re
 	if err != nil {
 		return nil, err
 	}
-	// in a policy aware setting, users may have access to a node, but not all pods
-	// in that case, we note that the user does not have access to the pods
-	// canViewPods := true
+
 	nodeNonTerminatedPodsList, err := r.clientset.Core().Pods(
 		namespace,
 	).List(
@@ -91,7 +89,6 @@ func (r *ResourceLister) listNodeResources(name string, namespace string) ([]*Re
 		if !errors.IsForbidden(err) {
 			return nil, err
 		}
-		// canViewPods = false
 	}
 
 	allocatable := node.Status.Capacity
@@ -136,7 +133,10 @@ func (r *ResourceLister) ListResources(namespace string) ([]*ResourceAllocation,
 	var resourceAllocation []*ResourceAllocation
 
 	for _, node := range nodes.Items {
-		nodeUsage, _ := r.listNodeResources(node.GetName(), namespace)
+		nodeUsage, err := r.listNodeResources(node.GetName(), namespace)
+		if err != nil {
+			return nil, err
+		}
 		resourceAllocation = append(resourceAllocation, nodeUsage...)
 	}
 
