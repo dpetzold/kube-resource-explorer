@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-func cmp(r []*ResourceUsage, field string, i, j int, reverse bool) bool {
+func cmp(r []*ResourceAllocation, field string, i, j int, reverse bool) bool {
 	f1 := r[i].getField(field)
 	f2 := r[j].getField(field)
 
@@ -44,7 +44,7 @@ func cmp(r []*ResourceUsage, field string, i, j int, reverse bool) bool {
 	panic("Unknown type")
 }
 
-func (r *ResourceLister) Print(resourceUsage []*ResourceUsage, field string, reverse bool) {
+func (r *ResourceLister) Print(resourceUsage []*ResourceAllocation, field string, reverse bool) {
 
 	sort.Slice(resourceUsage, func(i, j int) bool {
 		return cmp(resourceUsage, field, i, j, reverse)

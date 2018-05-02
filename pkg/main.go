@@ -48,7 +48,7 @@ func main() {
 		panic(err.Error())
 	}
 
-	r := ResourceUsage{}
+	r := ResourceAllocation{}
 
 	if !r.Validate(*sort) {
 		fmt.Printf("\"%s\" is not a valid field. Possible values are:\n\n%s\n", *sort, strings.Join(r.getFields(), ", "))

@@ -18,7 +18,7 @@ type ResourceLister struct {
 	clientset *kubernetes.Clientset
 }
 
-type ResourceUsage struct {
+type ResourceAllocation struct {
 	Name                string
 	Namespace           string
 	CpuReq              resource.Quantity
@@ -31,7 +31,7 @@ type ResourceUsage struct {
 	FractionMemoryLimit int64
 }
 
-func (r *ResourceUsage) getFields() []string {
+func (r *ResourceAllocation) getFields() []string {
 	var fields []string
 
 	s := reflect.ValueOf(r).Elem()
@@ -43,13 +43,13 @@ func (r *ResourceUsage) getFields() []string {
 	return fields
 }
 
-func (r *ResourceUsage) getField(field string) interface{} {
+func (r *ResourceAllocation) getField(field string) interface{} {
 	v := reflect.ValueOf(r)
 	f := reflect.Indirect(v).FieldByName(field)
 	return f.Interface()
 }
 
-func (r ResourceUsage) Validate(field string) bool {
+func (r ResourceAllocation) Validate(field string) bool {
 	for _, v := range r.getFields() {
 		if field == v {
 			return true
@@ -66,7 +66,7 @@ func NewResourceLister(
 	}
 }
 
-func (r *ResourceLister) ListNodeResources(name string, namespace string) ([]*ResourceUsage, error) {
+func (r *ResourceLister) listNodeResources(name string, namespace string) ([]*ResourceAllocation, error) {
 	mc := r.clientset.Core().Nodes()
 	node, err := mc.Get(name, metav1.GetOptions{})
 	if err != nil {
@@ -99,7 +99,7 @@ func (r *ResourceLister) ListNodeResources(name string, namespace string) ([]*Re
 		allocatable = node.Status.Allocatable
 	}
 
-	var resourceUsage []*ResourceUsage
+	var resourceAllocation []*ResourceAllocation
 
 	// https://github.com/kubernetes/kubernetes/blob/master/pkg/printers/internalversion/describe.go#L2970
 	for _, pod := range nodeNonTerminatedPodsList.Items {
@@ -110,7 +110,7 @@ func (r *ResourceLister) ListNodeResources(name string, namespace string) ([]*Re
 		fractionMemoryReq := float64(memoryReq.Value()) / float64(allocatable.Memory().Value()) * 100
 		fractionMemoryLimit := float64(memoryLimit.Value()) / float64(allocatable.Memory().Value()) * 100
 
-		resourceUsage = append(resourceUsage, &ResourceUsage{
+		resourceAllocation = append(resourceAllocation, &ResourceAllocation{
 			Name:                pod.GetName(),
 			Namespace:           pod.GetNamespace(),
 			CpuReq:              cpuReq,
@@ -124,21 +124,21 @@ func (r *ResourceLister) ListNodeResources(name string, namespace string) ([]*Re
 		})
 	}
 
-	return resourceUsage, nil
+	return resourceAllocation, nil
 }
 
-func (r *ResourceLister) ListResources(namespace string) ([]*ResourceUsage, error) {
+func (r *ResourceLister) ListResources(namespace string) ([]*ResourceAllocation, error) {
 	nodes, err := r.clientset.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	var resourceUsage []*ResourceUsage
+	var resourceAllocation []*ResourceAllocation
 
 	for _, node := range nodes.Items {
-		nodeUsage, _ := r.ListNodeResources(node.GetName(), namespace)
-		resourceUsage = append(resourceUsage, nodeUsage...)
+		nodeUsage, _ := r.listNodeResources(node.GetName(), namespace)
+		resourceAllocation = append(resourceAllocation, nodeUsage...)
 	}
 
-	return resourceUsage, nil
+	return resourceAllocation, nil
 }
