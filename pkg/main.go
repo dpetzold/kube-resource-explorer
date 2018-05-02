@@ -14,20 +14,18 @@ import (
 
 var GitCommit string
 
-func stringInSlice(s string, slice []string) bool {
-	for _, v := range slice {
-		if s == v {
-			return true
-		}
+func homeDir() string {
+	if h := os.Getenv("HOME"); h != "" {
+		return h
 	}
-	return false
+	return os.Getenv("USERPROFILE") // windows
 }
 
 func main() {
 
 	var (
 		namespace  = flag.String("namespace", "", "filter by namespace (defaults to all)")
-		field      = flag.String("field", "CpuReq", "field to sort by (defaults to CpuReq)")
+		sort       = flag.String("sort", "CpuReq", "field to sort by")
 		reverse    = flag.Bool("reverse", false, "reverse sort output")
 		kubeconfig *string
 	)
@@ -51,20 +49,17 @@ func main() {
 	}
 
 	r := ResourceUsage{}
-	validFields := r.getFields()
 
-	if !stringInSlice(*field, validFields) {
-		fmt.Printf("\"%s\" is not a valid field. Possible values are:\n\n%s\n", *field, strings.Join(validFields, ", "))
+	if !r.Validate(*sort) {
+		fmt.Printf("\"%s\" is not a valid field. Possible values are:\n\n%s\n", *sort, strings.Join(r.getFields(), ", "))
 		os.Exit(1)
 	}
 
 	rl := NewResourceLister(clientset)
-	rl.ListResources(*namespace, *field, *reverse)
-}
-
-func homeDir() string {
-	if h := os.Getenv("HOME"); h != "" {
-		return h
+	resources, err := rl.ListResources(*namespace)
+	if err != nil {
+		panic(err.Error())
 	}
-	return os.Getenv("USERPROFILE") // windows
+
+	rl.Print(resources, *sort, *reverse)
 }
