@@ -13,8 +13,7 @@ func cmp(r []*ResourceAllocation, field string, i, j int, reverse bool) bool {
 	f1 := r[i].getField(field)
 	f2 := r[j].getField(field)
 
-	q1, ok := f1.(resource.Quantity)
-	if ok {
+	if q1, ok := f1.(resource.Quantity); ok {
 		q2 := f2.(resource.Quantity)
 		if reverse {
 			return q1.Cmp(q2) < 0
@@ -22,8 +21,7 @@ func cmp(r []*ResourceAllocation, field string, i, j int, reverse bool) bool {
 		return q1.Cmp(q2) > 0
 	}
 
-	v1, ok := f1.(int64)
-	if ok {
+	if v1, ok := f1.(int64); ok {
 		v2 := f2.(int64)
 		if reverse {
 			return v1 < v2
@@ -32,8 +30,7 @@ func cmp(r []*ResourceAllocation, field string, i, j int, reverse bool) bool {
 
 	}
 
-	s1, ok := f1.(string)
-	if ok {
+	if s1, ok := f1.(string); ok {
 		s2 := f2.(string)
 		if reverse {
 			return strings.Compare(s1, s2) > 0

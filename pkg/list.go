@@ -74,7 +74,8 @@ func (r *ResourceLister) listNodeResources(name string, namespace string) ([]*Re
 	}
 
 	fieldSelector, err := fields.ParseSelector(
-		fmt.Sprintf("spec.nodeName=%s,status.phase!=%s,status.phase!=%s", name, string(api_v1.PodSucceeded), string(api_v1.PodFailed)),
+		fmt.Sprintf("spec.nodeName=%s,status.phase!=%s,status.phase!=%s",
+			name, string(api_v1.PodSucceeded), string(api_v1.PodFailed)),
 	)
 	if err != nil {
 		return nil, err
