@@ -3,5 +3,6 @@ import:
 - package: k8s.io/client-go
   version: v7.0.0
 - package: github.com/ryanuber/columnize
-
+- package: github.com/davecgh/go-spew/spew
+- package: cloud.google.com/go/monitoring/apiv3
 

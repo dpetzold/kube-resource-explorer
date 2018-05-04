@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"reflect"
 
 	api_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,26 +30,8 @@ type ResourceAllocation struct {
 	PercentMemoryLimit int64
 }
 
-func (r *ResourceAllocation) getFields() []string {
-	var fields []string
-
-	s := reflect.ValueOf(r).Elem()
-	typeOfT := s.Type()
-
-	for i := 0; i < s.NumField(); i++ {
-		fields = append(fields, typeOfT.Field(i).Name)
-	}
-	return fields
-}
-
-func (r *ResourceAllocation) getField(field string) interface{} {
-	v := reflect.ValueOf(r)
-	f := reflect.Indirect(v).FieldByName(field)
-	return f.Interface()
-}
-
 func (r ResourceAllocation) Validate(field string) bool {
-	for _, v := range r.getFields() {
+	for _, v := range getFields(r) {
 		if field == v {
 			return true
 		}
