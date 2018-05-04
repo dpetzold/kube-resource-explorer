@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"reflect"
 
 	api_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,36 +20,18 @@ type ResourceLister struct {
 type ResourceAllocation struct {
 	Name               string
 	Namespace          string
-	CpuReq             resource.Quantity
-	CpuLimit           resource.Quantity
+	CpuReq             *resource.Quantity
+	CpuLimit           *resource.Quantity
 	PercentCpuReq      int64
 	PercentCpuLimit    int64
-	MemReq             resource.Quantity
-	MemLimit           resource.Quantity
+	MemReq             *resource.Quantity
+	MemLimit           *resource.Quantity
 	PercentMemoryReq   int64
 	PercentMemoryLimit int64
 }
 
-func (r *ResourceAllocation) getFields() []string {
-	var fields []string
-
-	s := reflect.ValueOf(r).Elem()
-	typeOfT := s.Type()
-
-	for i := 0; i < s.NumField(); i++ {
-		fields = append(fields, typeOfT.Field(i).Name)
-	}
-	return fields
-}
-
-func (r *ResourceAllocation) getField(field string) interface{} {
-	v := reflect.ValueOf(r)
-	f := reflect.Indirect(v).FieldByName(field)
-	return f.Interface()
-}
-
 func (r ResourceAllocation) Validate(field string) bool {
-	for _, v := range r.getFields() {
+	for _, v := range getFields(&r) {
 		if field == v {
 			return true
 		}
@@ -111,12 +92,12 @@ func (r *ResourceLister) listNodeResources(name string, namespace string) ([]*Re
 		resourceAllocation = append(resourceAllocation, &ResourceAllocation{
 			Name:               pod.GetName(),
 			Namespace:          pod.GetNamespace(),
-			CpuReq:             cpuReq,
-			CpuLimit:           cpuLimit,
+			CpuReq:             &cpuReq,
+			CpuLimit:           &cpuLimit,
 			PercentCpuReq:      int64(percentCpuReq),
 			PercentCpuLimit:    int64(percentCpuLimit),
-			MemReq:             memoryReq,
-			MemLimit:           memoryLimit,
+			MemReq:             &memoryReq,
+			MemLimit:           &memoryLimit,
 			PercentMemoryReq:   int64(percentMemoryReq),
 			PercentMemoryLimit: int64(percentMemoryLimit),
 		})
