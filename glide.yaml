@@ -4,8 +4,8 @@ import:
   version: v7.0.0
 - package: github.com/ryanuber/columnize
 - package: github.com/davecgh/go-spew/spew
-- package: golang.org/x/text/message
-- package: golang.org/x/text/language
+- package: golang.org/x/text
+  version: 7922cc490dd5a7dbaa7fd5d6196b49db59ac042f
 - package: cloud.google.com/go/monitoring/apiv3
   version: e9284bade4f43071dac5ec56c73a03a3c9fa7772
 - package: google.golang.org/api/transport/http

@@ -1,5 +1,5 @@
-hash: a424db49e02ae01c2a0207175281de00f90da34a3151250132161139156602ea
-updated: 2018-05-08T16:42:57.385730265-07:00
+hash: 41dbfa7d859f3b290459a2b5f9cf47b06f310d23bd36c922c10938bb4a3693ce
+updated: 2018-05-08T16:56:54.627532402-07:00
 imports:
 - name: cloud.google.com/go
   version: e9284bade4f43071dac5ec56c73a03a3c9fa7772
@@ -97,10 +97,14 @@ imports:
   - unix
   - windows
 - name: golang.org/x/text
-  version: b19bf474d317b857955b12035d2c5acb57ce8b01
+  version: 7922cc490dd5a7dbaa7fd5d6196b49db59ac042f
   subpackages:
+  - feature/plural
   - internal
   - internal/catmsg
+  - internal/format
+  - internal/language
+  - internal/language/compact
   - internal/number
   - internal/stringset
   - internal/tag
