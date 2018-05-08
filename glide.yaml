@@ -1,4 +1,4 @@
-package: github.com/dpetzold/kube-resource-lister
+package: github.com/dpetzold/kube-resource-explorer
 import:
 - package: k8s.io/client-go
   version: v7.0.0
