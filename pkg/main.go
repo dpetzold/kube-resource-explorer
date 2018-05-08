@@ -78,7 +78,7 @@ func main() {
 		}
 
 		metrics := c.getMetrics(*namespace, *duration, metric_type)
-		PrintContainerMetrics(metrics, *duration, *sort, *reverse)
+		PrintContainerMetrics(metrics, metric_type, *duration, *sort, *reverse)
 
 	} else {
 

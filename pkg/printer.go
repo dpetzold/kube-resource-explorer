@@ -89,14 +89,23 @@ func PrintResourceUsage(resourceUsage []*ResourceAllocation, field string, rever
 	fmt.Println(columnize.SimpleFormat(rows))
 }
 
-func PrintContainerMetrics(containerMetrics []*ContainerMetrics, duration time.Duration, field string, reverse bool) {
+func PrintContainerMetrics(containerMetrics []*ContainerMetrics, metric_type MetricType, duration time.Duration, field string, reverse bool) {
 
 	sort.Slice(containerMetrics, func(i, j int) bool {
 		return cmp(containerMetrics, field, i, j, reverse)
 	})
 
+	var mode_or_avg string
+
+	switch metric_type {
+	case MEM:
+		mode_or_avg = "Mode"
+	case CPU:
+		mode_or_avg = "Avg"
+	}
+
 	table := []string{
-		"                        Pod/Container                         |  Last  |   Min  |   Max  | Avg/Mode",
+		fmt.Sprintf("                        Pod/Container                         |  Last  |   Min  |   Max  | %s", mode_or_avg),
 		"------------------------------------------------------------- | ------ | ------ | ------ | --------",
 	}
 
