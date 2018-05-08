@@ -6,3 +6,13 @@ import:
 - package: github.com/davecgh/go-spew/spew
 - package: golang.org/x/text/message
 - package: golang.org/x/text/language
+- package: cloud.google.com/go/monitoring/apiv3
+  version: e9284bade4f43071dac5ec56c73a03a3c9fa7772
+- package: google.golang.org/api/transport/http
+  version: 20530fd5d65ad2caee87891f9896d7547cb400c9
+- package: google.golang.org/grpc/metadata
+  version: 45d7f3a23f0b937ba711aa0e3e3426325d3b9ae4
+- package: github.com/golang/protobuf/proto
+  version: b4deda0973fb4c70b50d226b1af49f3da59f5265
+- package: golang.org/x/oauth2/google
+  version: cdc340f7c179dbbfa4afd43b7614e8fcadde4269
