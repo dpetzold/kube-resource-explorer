@@ -21,7 +21,8 @@ Explore your kube resource usage and allocation.
 * `-historical` - Display historical resource data
 * `-cpu` - Show historical cpu data
 * `-mem` - Show historical memory data
-* `-duration` - The duration to use for historical data
+* `-duration` - The duration to use for historical data (default to 4h)
+* `-project` - The GCloud project id (required for historical)
 
 To use the historical functionality you must set the
 `GOOGLE_APPLICATION_CREDENTIALS` environment variable. See below for more
