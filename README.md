@@ -41,9 +41,9 @@ $ make build
 Display historical statistical resource usage from StackDriver. This will
 evaluate the TimeSeries data from StackDriver and show the latest value (the
 most current data point), minimum value, maximum value and the average or the
-mode in the requested duration. The average is displayed when cpu is requested.
-For memory the mode is displayed (mode is the most common occurring value in
-the set). 
+mode in the requested duration per container. The average is displayed when
+cpu is requested. For memory the mode is displayed (mode is the most common
+occurring value in the set).
 
 ```
 $ ./resource-explorer -historical -duration 4h -mem -sort Mode -reverse -namespace kube-system
