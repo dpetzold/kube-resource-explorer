@@ -8,5 +8,6 @@ jobs:
     steps:
       - checkout
       - run: curl https://glide.sh/get | sh
+      - run: go get -u cloud.google.com/go/monitoring/apiv3
       - run: make build
       - run: go test -v ./...

@@ -1,8 +1,6 @@
 package main
 
 import (
-	// Imports the Stackdriver Monitoring client package.
-
 	"fmt"
 	"time"
 
