@@ -20,12 +20,12 @@ type ResourceLister struct {
 type ResourceAllocation struct {
 	Name               string
 	Namespace          string
-	CpuReq             resource.Quantity
-	CpuLimit           resource.Quantity
+	CpuReq             *resource.Quantity
+	CpuLimit           *resource.Quantity
 	PercentCpuReq      int64
 	PercentCpuLimit    int64
-	MemReq             resource.Quantity
-	MemLimit           resource.Quantity
+	MemReq             *resource.Quantity
+	MemLimit           *resource.Quantity
 	PercentMemoryReq   int64
 	PercentMemoryLimit int64
 }
