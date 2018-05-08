@@ -7,7 +7,6 @@ jobs:
     working_directory: /go/src/github.com/dpetzold/kube-resource-explorer
     steps:
       - checkout
-
       - run: curl https://glide.sh/get | sh
       - run: make build
       - run: go test -v ./...

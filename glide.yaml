@@ -5,4 +5,5 @@ import:
 - package: github.com/ryanuber/columnize
 - package: github.com/davecgh/go-spew/spew
 - package: cloud.google.com/go/monitoring/apiv3
-
+- package: golang.org/x/text/message
+- package: golang.org/x/text/language
