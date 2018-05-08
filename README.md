@@ -47,7 +47,7 @@ cpu is requested. For memory the mode is displayed (mode is the most common
 occurring value in the set).
 
 ```
-$ ./resource-explorer -historical -duration 4h -mem -sort Mode -reverse -namespace kube-system
+$ ./resource-explorer -historical -duration 4h -mem -sort Mode -reverse -namespace kube-system -project myprojectid
 Pod/Container                                                     Last    Min     Max     Mode
 -------------------------------------------------------------     ------  ------  ------  --------
 l7-default-backend-1044750973-kqh98/default-http-backend          2Mi     2Mi     2Mi     2Mi
@@ -75,7 +75,8 @@ Results shown are for a period of 4h0m0s. 2,400 data points were evaluted.
 ```
 
 ```
-$ ./resource-explorer -historical -duration 4h -cpu -sort Max -reverse -namespace kube-system
+$ ./resource-explorer -historical -duration 4h -cpu -sort Max -reverse -namespace kube-system -project myproj
+ectid
 Pod/Container                                                     Last    Min     Max     Avg
 -------------------------------------------------------------     ------  ------  ------  --------                                     
 heapster-v1.4.3-74b5bd94bb-fz8hd/prom-to-sd                       0m      0m      0m      0m                                           
