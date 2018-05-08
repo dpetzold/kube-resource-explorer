@@ -114,5 +114,5 @@ func PrintContainerMetrics(containerMetrics []*ContainerMetrics, duration time.D
 	p := message.NewPrinter(language.English)
 
 	fmt.Println(columnize.SimpleFormat(table))
-	fmt.Printf("\n\nResults shown are for a period of %s. %s data points were analyzed.\n\n", duration.String(), p.Sprintf("%d", total))
+	fmt.Printf("\nResults shown are for a period of %s. %s data points were evaluted.\n", duration.String(), p.Sprintf("%d", total))
 }

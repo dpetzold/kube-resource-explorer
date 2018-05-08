@@ -98,7 +98,7 @@ func (c *StackDriverClient) getMemMetrics(it *monitoring.TimeSeriesIterator) *Co
 			break
 		}
 		if err != nil {
-			log.WithError(err).Info("iterating")
+			log.WithError(err).Debug("iterating")
 			break
 		}
 
@@ -146,7 +146,7 @@ func (c *StackDriverClient) getCpuMetrics(it *monitoring.TimeSeriesIterator) *Co
 		}
 		if err != nil {
 			// probably isn't a critical error, see above
-			log.WithError(err).Info("iterating")
+			log.WithError(err).Debug("iterating")
 			break
 		}
 
