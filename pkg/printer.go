@@ -74,13 +74,13 @@ func PrintResourceUsage(resourceUsage []*ResourceAllocation, field string, rever
 		row := strings.Join([]string{
 			u.Namespace,
 			u.Name,
-			u.CpuReq.String(),
+			QuantityStr(u.CpuReq, "m"),
 			fmtPercent(u.PercentCpuReq),
-			u.CpuLimit.String(),
+			QuantityStr(u.CpuLimit, "m"),
 			fmtPercent(u.PercentCpuLimit),
-			u.MemReq.String(),
+			QuantityStr(u.MemReq, "Mi"),
 			fmtPercent(u.PercentMemoryReq),
-			u.MemLimit.String(),
+			QuantityStr(u.MemLimit, "Mi"),
 			fmtPercent(u.PercentMemoryLimit),
 		}, "| ")
 		rows = append(rows, row)

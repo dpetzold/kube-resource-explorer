@@ -31,7 +31,7 @@ type ResourceAllocation struct {
 }
 
 func (r ResourceAllocation) Validate(field string) bool {
-	for _, v := range getFields(r) {
+	for _, v := range getFields(&r) {
 		if field == v {
 			return true
 		}
@@ -92,12 +92,12 @@ func (r *ResourceLister) listNodeResources(name string, namespace string) ([]*Re
 		resourceAllocation = append(resourceAllocation, &ResourceAllocation{
 			Name:               pod.GetName(),
 			Namespace:          pod.GetNamespace(),
-			CpuReq:             cpuReq,
-			CpuLimit:           cpuLimit,
+			CpuReq:             &cpuReq,
+			CpuLimit:           &cpuLimit,
 			PercentCpuReq:      int64(percentCpuReq),
 			PercentCpuLimit:    int64(percentCpuLimit),
-			MemReq:             memoryReq,
-			MemLimit:           memoryLimit,
+			MemReq:             &memoryReq,
+			MemLimit:           &memoryLimit,
 			PercentMemoryReq:   int64(percentMemoryReq),
 			PercentMemoryLimit: int64(percentMemoryLimit),
 		})

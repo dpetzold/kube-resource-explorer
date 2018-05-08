@@ -27,29 +27,32 @@ type ContainerMetrics struct {
 	DataPoints int64
 }
 
-func fmt_cpu(quantity *resource.Quantity) string {
-	return fmt.Sprintf("%vm", quantity.MilliValue())
-}
-
-func fmt_mem_value(quantity *resource.Quantity) string {
-	return fmt.Sprintf("%vMi", quantity.Value()/(1024*1024))
+func QuantityStr(quantity *resource.Quantity, unit string) string {
+	switch unit {
+	case "m":
+		return fmt.Sprintf("%vm", quantity.MilliValue())
+	case "Mi":
+		return fmt.Sprintf("%vMi", quantity.Value()/(1024*1024))
+	default:
+		return quantity.String()
+	}
 }
 
 func (m *ContainerMetrics) fmtCpu() []string {
 	return []string{
-		fmt_cpu(m.Last),
-		fmt_cpu(m.Min),
-		fmt_cpu(m.Max),
-		fmt_cpu(m.Avg),
+		QuantityStr(m.Last, "m"),
+		QuantityStr(m.Min, "m"),
+		QuantityStr(m.Max, "m"),
+		QuantityStr(m.Avg, "m"),
 	}
 }
 
 func (m *ContainerMetrics) fmtMem() []string {
 	return []string{
-		fmt_mem_value(m.Last),
-		fmt_mem_value(m.Min),
-		fmt_mem_value(m.Max),
-		fmt_mem_value(m.Mode),
+		QuantityStr(m.Last, "Mi"),
+		QuantityStr(m.Min, "Mi"),
+		QuantityStr(m.Max, "Mi"),
+		QuantityStr(m.Mode, "Mi"),
 	}
 }
 
