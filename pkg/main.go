@@ -37,6 +37,7 @@ func main() {
 		duration   = flag.Duration("duration", default_duration, "specify the duration")
 		mem_only   = flag.Bool("mem", false, "show historical memory info")
 		cpu_only   = flag.Bool("cpu", false, "show historical cpu info")
+		project    = flag.String("project", "", "Project id")
 		kubeconfig *string
 	)
 
@@ -60,7 +61,12 @@ func main() {
 
 	if *historical {
 
-		c := NewStackDriverClient("leafops-165619", clientset)
+		if *project == "" {
+			fmt.Printf("-project is required for historical data\n")
+			os.Exit(1)
+		}
+
+		c := NewStackDriverClient(*project, clientset)
 		var metric_type MetricType
 
 		if *mem_only {
