@@ -1,6 +1,9 @@
 Resource Explorer
 ================
 
+[![CircleCI](https://circleci.com/gh/dpetzold/kube-resource-explorer.svg?style=svg)](https://circleci.com/gh/dpetzold/kube-resource-explorer)
+
+
 Explore your kube resource usage and allocation.
 
 * Display historical statistical resource usage from StackDriver.
