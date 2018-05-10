@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/clientcmd"
@@ -59,6 +60,8 @@ func main() {
 		panic(err.Error())
 	}
 
+	k := NewKubeClient(clientset)
+
 	if *historical {
 
 		if *project == "" {
@@ -66,35 +69,44 @@ func main() {
 			os.Exit(1)
 		}
 
-		c := NewStackDriverClient(*project, clientset)
-		var metric_type MetricType
+		stackDriver := NewStackDriverClient(*project)
+		var resourceName v1.ResourceName
 
 		if *mem_only {
-			metric_type = MEM
+			resourceName = v1.ResourceMemory
 		} else if *cpu_only {
-			metric_type = CPU
+			resourceName = v1.ResourceCPU
 		} else {
 			panic("Unknown metric type")
 		}
 
-		metrics := c.getMetrics(*namespace, *duration, metric_type)
-		PrintContainerMetrics(metrics, metric_type, *duration, *sort, *reverse)
+		activePods, err := k.getActivePods(*namespace, "")
+		if err != nil {
+			panic(err.Error())
+		}
+
+		metrics := stackDriver.getMetrics(activePods, *duration, resourceName)
+		PrintContainerMetrics(metrics, resourceName, *duration, *sort, *reverse)
 
 	} else {
 
-		r := ResourceAllocation{}
+		r := ContainerResources{}
 
 		if !r.Validate(*sort) {
 			fmt.Printf("\"%s\" is not a valid field. Possible values are:\n\n%s\n", *sort, strings.Join(getFields(r), ", "))
 			os.Exit(1)
 		}
 
-		rl := NewResourceLister(clientset)
-		resources, err := rl.ListResources(*namespace)
+		resources, err := k.GetContainerResources(*namespace)
 		if err != nil {
 			panic(err.Error())
 		}
 
-		PrintResourceUsage(resources, *sort, *reverse)
+		capacity, err := k.GetClusterCapacity()
+		if err != nil {
+			panic(err.Error())
+		}
+
+		PrintResourceUsage(capacity, resources, *sort, *reverse)
 	}
 }

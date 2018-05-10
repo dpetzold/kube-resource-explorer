@@ -9,6 +9,7 @@ import (
 	"github.com/ryanuber/columnize"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
+	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -44,7 +45,7 @@ func _cmp(f1, f2 interface{}, reverse bool, field string) bool {
 
 func cmp(t interface{}, field string, i, j int, reverse bool) bool {
 
-	if ra, ok := t.([]*ResourceAllocation); ok {
+	if ra, ok := t.([]*ContainerResources); ok {
 		return _cmp(getField(ra[i], field), getField(ra[j], field), reverse, field)
 	}
 
@@ -59,10 +60,10 @@ func fmtPercent(p int64) string {
 	return fmt.Sprintf("%d%%", p)
 }
 
-func PrintResourceUsage(resourceUsage []*ResourceAllocation, field string, reverse bool) {
+func PrintResourceUsage(capacity v1.ResourceList, resources []*ContainerResources, field string, reverse bool) {
 
-	sort.Slice(resourceUsage, func(i, j int) bool {
-		return cmp(resourceUsage, field, i, j, reverse)
+	sort.Slice(resources, func(i, j int) bool {
+		return cmp(resources, field, i, j, reverse)
 	})
 
 	rows := []string{
@@ -70,7 +71,14 @@ func PrintResourceUsage(resourceUsage []*ResourceAllocation, field string, rever
 		"--------- | ---- | ------ | ------- | -------- | --------- | ------ | ------- | -------- | ---------",
 	}
 
-	for _, u := range resourceUsage {
+	totalCpuReq, totalCpuLimit, totalMemoryReq, totalMemoryLimit := resource.Quantity{}, resource.Quantity{}, resource.Quantity{}, resource.Quantity{}
+
+	for _, u := range resources {
+		totalCpuReq.Add(*u.CpuReq)
+		totalCpuLimit.Add(*u.CpuLimit)
+		totalMemoryReq.Add(*u.MemReq)
+		totalMemoryLimit.Add(*u.MemLimit)
+
 		row := strings.Join([]string{
 			u.Namespace,
 			u.Name,
@@ -86,10 +94,25 @@ func PrintResourceUsage(resourceUsage []*ResourceAllocation, field string, rever
 		rows = append(rows, row)
 	}
 
+	rows = append(rows, "--------- | ---- | ------ | ------- | -------- | --------- | ------ | ------- | -------- | ---------")
+
+	rows = append(rows, strings.Join([]string{
+		"Total",
+		"",
+		fmt.Sprintf("%s/%s", QuantityStr(&totalCpuReq, "m"), QuantityStr(capacity.Cpu(), "m")),
+		fmtPercent(calcCpuPercentage(totalCpuReq, capacity)),
+		fmt.Sprintf("%s/%s", QuantityStr(&totalCpuLimit, "m"), QuantityStr(capacity.Cpu(), "m")),
+		fmtPercent(calcCpuPercentage(totalCpuLimit, capacity)),
+		fmt.Sprintf("%s/%s", QuantityStr(&totalMemoryReq, "Mi"), QuantityStr(capacity.Memory(), "Mi")),
+		fmtPercent(calcMemoryPercentage(totalMemoryReq, capacity)),
+		fmt.Sprintf("%s/%s", QuantityStr(&totalMemoryLimit, "Mi"), QuantityStr(capacity.Memory(), "Mi")),
+		fmtPercent(calcMemoryPercentage(totalMemoryLimit, capacity)),
+	}, "| "))
+
 	fmt.Println(columnize.SimpleFormat(rows))
 }
 
-func PrintContainerMetrics(containerMetrics []*ContainerMetrics, metric_type MetricType, duration time.Duration, field string, reverse bool) {
+func PrintContainerMetrics(containerMetrics []*ContainerMetrics, metric_type v1.ResourceName, duration time.Duration, field string, reverse bool) {
 
 	sort.Slice(containerMetrics, func(i, j int) bool {
 		return cmp(containerMetrics, field, i, j, reverse)
@@ -98,9 +121,9 @@ func PrintContainerMetrics(containerMetrics []*ContainerMetrics, metric_type Met
 	var mode_or_avg string
 
 	switch metric_type {
-	case MEM:
+	case v1.ResourceMemory:
 		mode_or_avg = "Mode"
-	case CPU:
+	case v1.ResourceCPU:
 		mode_or_avg = "Avg"
 	}
 
