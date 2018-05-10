@@ -3,6 +3,10 @@ package main
 import (
 	"fmt"
 
+	monitoring "cloud.google.com/go/monitoring/apiv3"
+	log "github.com/Sirupsen/logrus"
+	"google.golang.org/api/iterator"
+	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -65,6 +69,105 @@ func (m *ContainerMetrics) toSlice() []string {
 	}
 
 	return nil
+}
+
+func evaluateMemMetrics(it *monitoring.TimeSeriesIterator) *ContainerMetrics {
+
+	var points []*monitoringpb.Point
+	set := make(map[int64]int)
+
+	for {
+		resp, err := it.Next()
+		// This doesn't work
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.WithError(err).Debug("iterating")
+			break
+		}
+
+		log.Debug(resp.Metric)
+		log.Debug(resp.Resource)
+
+		for _, point := range resp.Points {
+			value := int64(point.Value.GetInt64Value())
+			if _, ok := set[value]; ok {
+				set[value] += 1
+			} else {
+				set[value] = 1
+			}
+			points = append(points, point)
+		}
+	}
+
+	var data []int64
+	for k, _ := range set {
+		data = append(data, k)
+	}
+
+	sortPointsAsc(points)
+
+	min, max := MinMax_int64(data)
+	format := resource.BinarySI
+	return &ContainerMetrics{
+		MetricType: MEM,
+		Last:       resource.NewQuantity(int64(points[0].Value.GetInt64Value()), format),
+		Min:        resource.NewQuantity(min, format),
+		Max:        resource.NewQuantity(max, format),
+		Mode:       resource.NewQuantity(mode_int64(set), format),
+		DataPoints: int64(len(points)),
+	}
+}
+
+func evaluateCpuMetrics(it *monitoring.TimeSeriesIterator) *ContainerMetrics {
+	var points []*monitoringpb.Point
+
+	for {
+		resp, err := it.Next()
+		// This doesn't work
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			// probably isn't a critical error, see above
+			log.WithError(err).Debug("iterating")
+			break
+		}
+
+		log.Debug(resp.Metric)
+		log.Debug(resp.Resource)
+
+		for _, point := range resp.Points {
+			points = append(points, point)
+		}
+	}
+
+	sortPointsAsc(points)
+
+	var data []int64
+
+	for i := 1; i < len(points); i++ {
+		cur := points[i]
+		prev := points[i-1]
+
+		interval := cur.Interval.EndTime.Seconds - prev.Interval.EndTime.Seconds
+
+		delta := float64(cur.Value.GetDoubleValue()) - float64(prev.Value.GetDoubleValue())
+		data = append(data, int64((delta/float64(interval))*1000))
+	}
+
+	min, max := MinMax_int64(data)
+
+	format := resource.DecimalSI
+	return &ContainerMetrics{
+		MetricType: CPU,
+		Last:       resource.NewMilliQuantity(data[0], format),
+		Min:        resource.NewMilliQuantity(min, format),
+		Max:        resource.NewMilliQuantity(max, format),
+		Avg:        resource.NewMilliQuantity(int64(average_int64(data)), format),
+		DataPoints: int64(len(points)),
+	}
 }
 
 func GroupMetricsBy(metrics []*ContainerMetrics, fields ...string) map[string]map[string]map[string]*ContainerMetrics {

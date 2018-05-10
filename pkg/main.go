@@ -59,6 +59,8 @@ func main() {
 		panic(err.Error())
 	}
 
+	k := NewKubeClient(clientset)
+
 	if *historical {
 
 		if *project == "" {
@@ -66,7 +68,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		c := NewStackDriverClient(*project, clientset)
+		c := NewStackDriverClient(*project)
 		var metric_type MetricType
 
 		if *mem_only {
@@ -77,7 +79,7 @@ func main() {
 			panic("Unknown metric type")
 		}
 
-		metrics := c.getMetrics(*namespace, *duration, metric_type)
+		metrics := k.getMetrics(c, *namespace, *duration, metric_type)
 		PrintContainerMetrics(metrics, metric_type, *duration, *sort, *reverse)
 
 	} else {
@@ -89,8 +91,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		rl := NewResourceLister(clientset)
-		resources, err := rl.ListResources(*namespace)
+		resources, err := k.ListResources(*namespace)
 		if err != nil {
 			panic(err.Error())
 		}
