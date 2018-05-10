@@ -5,7 +5,6 @@ import (
 
 	api_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	resourcehelper "k8s.io/kubernetes/pkg/api/v1/resource"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -47,6 +46,27 @@ func NewResourceLister(
 	}
 }
 
+func containerRequestsAndLimits(container *api_v1.Container) (reqs map[api_v1.ResourceName]resource.Quantity, limits map[api_v1.ResourceName]resource.Quantity) {
+	reqs, limits = map[api_v1.ResourceName]resource.Quantity{}, map[api_v1.ResourceName]resource.Quantity{}
+
+	for name, quantity := range container.Resources.Requests {
+		if _, ok := reqs[name]; ok {
+			panic(fmt.Sprintf("Duplicate key: %s", name))
+		} else {
+			reqs[name] = *quantity.Copy()
+		}
+	}
+
+	for name, quantity := range container.Resources.Limits {
+		if _, ok := limits[name]; ok {
+			panic(fmt.Sprintf("Duplicate key: %s", name))
+		} else {
+			limits[name] = *quantity.Copy()
+		}
+	}
+	return
+}
+
 func (r *ResourceLister) listNodeResources(name string, namespace string) ([]*ResourceAllocation, error) {
 	mc := r.clientset.Core().Nodes()
 	node, err := mc.Get(name, metav1.GetOptions{})
@@ -82,25 +102,27 @@ func (r *ResourceLister) listNodeResources(name string, namespace string) ([]*Re
 
 	// https://github.com/kubernetes/kubernetes/blob/master/pkg/printers/internalversion/describe.go#L2970
 	for _, pod := range nodeNonTerminatedPodsList.Items {
-		req, limit := resourcehelper.PodRequestsAndLimits(&pod)
-		cpuReq, cpuLimit, memoryReq, memoryLimit := req[api_v1.ResourceCPU], limit[api_v1.ResourceCPU], req[api_v1.ResourceMemory], limit[api_v1.ResourceMemory]
-		percentCpuReq := float64(cpuReq.MilliValue()) / float64(allocatable.Cpu().MilliValue()) * 100
-		percentCpuLimit := float64(cpuLimit.MilliValue()) / float64(allocatable.Cpu().MilliValue()) * 100
-		percentMemoryReq := float64(memoryReq.Value()) / float64(allocatable.Memory().Value()) * 100
-		percentMemoryLimit := float64(memoryLimit.Value()) / float64(allocatable.Memory().Value()) * 100
+		for _, container := range pod.Spec.Containers {
+			req, limit := containerRequestsAndLimits(&container)
+			cpuReq, cpuLimit, memoryReq, memoryLimit := req[api_v1.ResourceCPU], limit[api_v1.ResourceCPU], req[api_v1.ResourceMemory], limit[api_v1.ResourceMemory]
+			percentCpuReq := float64(cpuReq.MilliValue()) / float64(allocatable.Cpu().MilliValue()) * 100
+			percentCpuLimit := float64(cpuLimit.MilliValue()) / float64(allocatable.Cpu().MilliValue()) * 100
+			percentMemoryReq := float64(memoryReq.Value()) / float64(allocatable.Memory().Value()) * 100
+			percentMemoryLimit := float64(memoryLimit.Value()) / float64(allocatable.Memory().Value()) * 100
 
-		resourceAllocation = append(resourceAllocation, &ResourceAllocation{
-			Name:               pod.GetName(),
-			Namespace:          pod.GetNamespace(),
-			CpuReq:             &cpuReq,
-			CpuLimit:           &cpuLimit,
-			PercentCpuReq:      int64(percentCpuReq),
-			PercentCpuLimit:    int64(percentCpuLimit),
-			MemReq:             &memoryReq,
-			MemLimit:           &memoryLimit,
-			PercentMemoryReq:   int64(percentMemoryReq),
-			PercentMemoryLimit: int64(percentMemoryLimit),
-		})
+			resourceAllocation = append(resourceAllocation, &ResourceAllocation{
+				Name:               fmt.Sprintf("%s/%s", pod.GetName(), container.Name),
+				Namespace:          pod.GetNamespace(),
+				CpuReq:             &cpuReq,
+				CpuLimit:           &cpuLimit,
+				PercentCpuReq:      int64(percentCpuReq),
+				PercentCpuLimit:    int64(percentCpuLimit),
+				MemReq:             &memoryReq,
+				MemLimit:           &memoryLimit,
+				PercentMemoryReq:   int64(percentMemoryReq),
+				PercentMemoryLimit: int64(percentMemoryLimit),
+			})
+		}
 	}
 
 	return resourceAllocation, nil
