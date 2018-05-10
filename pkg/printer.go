@@ -70,7 +70,14 @@ func PrintResourceUsage(resourceUsage []*ResourceAllocation, field string, rever
 		"--------- | ---- | ------ | ------- | -------- | --------- | ------ | ------- | -------- | ---------",
 	}
 
+	totalCpuReq, totalCpuLimit, totalMemoryReq, totalMemoryLimit := resource.Quantity{}, resource.Quantity{}, resource.Quantity{}, resource.Quantity{}
+
 	for _, u := range resourceUsage {
+		totalCpuReq.Add(*u.CpuReq)
+		totalCpuLimit.Add(*u.CpuLimit)
+		totalMemoryReq.Add(*u.MemReq)
+		totalMemoryLimit.Add(*u.MemReq)
+
 		row := strings.Join([]string{
 			u.Namespace,
 			u.Name,
@@ -85,6 +92,21 @@ func PrintResourceUsage(resourceUsage []*ResourceAllocation, field string, rever
 		}, "| ")
 		rows = append(rows, row)
 	}
+
+	rows = append(rows, "--------- | ---- | ------ | ------- | -------- | --------- | ------ | ------- | -------- | ---------")
+
+	rows = append(rows, strings.Join([]string{
+		"Total",
+		"",
+		QuantityStr(&totalCpuReq, "m"),
+		"",
+		QuantityStr(&totalCpuLimit, "m"),
+		"",
+		QuantityStr(&totalMemoryReq, "Mi"),
+		"",
+		QuantityStr(&totalMemoryLimit, "Mi"),
+		"",
+	}, "| "))
 
 	fmt.Println(columnize.SimpleFormat(rows))
 }
