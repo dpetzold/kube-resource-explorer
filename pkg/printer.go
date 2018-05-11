@@ -96,22 +96,17 @@ func PrintResourceUsage(capacity v1.ResourceList, resources []*ContainerResource
 
 	rows = append(rows, "--------- | ---- | ------ | ------- | -------- | --------- | ------ | ------- | -------- | ---------")
 
-	percentCpuReq := float64(totalCpuReq.MilliValue()) / float64(capacity.Cpu().MilliValue()) * 100
-	percentCpuLimit := float64(totalCpuLimit.MilliValue()) / float64(capacity.Cpu().MilliValue()) * 100
-	percentMemoryReq := float64(totalMemoryReq.Value()) / float64(capacity.Memory().Value()) * 100
-	percentMemoryLimit := float64(totalMemoryLimit.Value()) / float64(capacity.Memory().Value()) * 100
-
 	rows = append(rows, strings.Join([]string{
 		"Total",
 		"",
 		fmt.Sprintf("%s/%s", QuantityStr(&totalCpuReq, "m"), QuantityStr(capacity.Cpu(), "m")),
-		fmtPercent(int64(percentCpuReq)),
+		fmtPercent(calcCpuPercentage(totalCpuReq, capacity)),
 		fmt.Sprintf("%s/%s", QuantityStr(&totalCpuLimit, "m"), QuantityStr(capacity.Cpu(), "m")),
-		fmtPercent(int64(percentCpuLimit)),
+		fmtPercent(calcCpuPercentage(totalCpuLimit, capacity)),
 		fmt.Sprintf("%s/%s", QuantityStr(&totalMemoryReq, "Mi"), QuantityStr(capacity.Memory(), "Mi")),
-		fmtPercent(int64(percentMemoryReq)),
+		fmtPercent(calcMemoryPercentage(totalMemoryReq, capacity)),
 		fmt.Sprintf("%s/%s", QuantityStr(&totalMemoryLimit, "Mi"), QuantityStr(capacity.Memory(), "Mi")),
-		fmtPercent(int64(percentMemoryLimit)),
+		fmtPercent(calcMemoryPercentage(totalMemoryLimit, capacity)),
 	}, "| "))
 
 	fmt.Println(columnize.SimpleFormat(rows))

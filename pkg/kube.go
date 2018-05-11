@@ -101,23 +101,23 @@ func (k *KubeClient) getNodeResources(nodeName string, namespace string) (resour
 	for _, pod := range activePodsList.Items {
 		for _, container := range pod.Spec.Containers {
 			req, limit := containerRequestsAndLimits(&container)
-			cpuReq, cpuLimit, memoryReq, memoryLimit := req[api_v1.ResourceCPU], limit[api_v1.ResourceCPU], req[api_v1.ResourceMemory], limit[api_v1.ResourceMemory]
-			percentCpuReq := float64(cpuReq.MilliValue()) / float64(allocatable.Cpu().MilliValue()) * 100
-			percentCpuLimit := float64(cpuLimit.MilliValue()) / float64(allocatable.Cpu().MilliValue()) * 100
-			percentMemoryReq := float64(memoryReq.Value()) / float64(allocatable.Memory().Value()) * 100
-			percentMemoryLimit := float64(memoryLimit.Value()) / float64(allocatable.Memory().Value()) * 100
+
+			cpuReq := req[api_v1.ResourceCPU]
+			cpuLimit := limit[api_v1.ResourceCPU]
+			memoryReq := req[api_v1.ResourceMemory]
+			memoryLimit := limit[api_v1.ResourceMemory]
 
 			resources = append(resources, &ContainerResources{
 				Name:               fmt.Sprintf("%s/%s", pod.GetName(), container.Name),
 				Namespace:          pod.GetNamespace(),
 				CpuReq:             &cpuReq,
 				CpuLimit:           &cpuLimit,
-				PercentCpuReq:      int64(percentCpuReq),
-				PercentCpuLimit:    int64(percentCpuLimit),
+				PercentCpuReq:      calcCpuPercentage(cpuReq, allocatable),
+				PercentCpuLimit:    calcCpuPercentage(cpuLimit, allocatable),
 				MemReq:             &memoryReq,
 				MemLimit:           &memoryLimit,
-				PercentMemoryReq:   int64(percentMemoryReq),
-				PercentMemoryLimit: int64(percentMemoryLimit),
+				PercentMemoryReq:   calcMemoryPercentage(memoryReq, allocatable),
+				PercentMemoryLimit: calcMemoryPercentage(memoryLimit, allocatable),
 			})
 		}
 	}
