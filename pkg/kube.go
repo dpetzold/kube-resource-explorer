@@ -159,7 +159,7 @@ func (k *KubeClient) getActivePods(namespace string) []api_v1.Pod {
 	return activePods.Items
 }
 
-func (k *KubeClient) getMetrics(s *StackDriverClient, namespace string, duration time.Duration, metric_type MetricType) (metrics []*ContainerMetrics) {
+func (k *KubeClient) getMetrics(s *StackDriverClient, namespace string, duration time.Duration, metric_type api_v1.ResourceName) (metrics []*ContainerMetrics) {
 
 	activePods := k.getActivePods(namespace)
 

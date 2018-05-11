@@ -9,6 +9,7 @@ import (
 	"github.com/ryanuber/columnize"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
+	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -111,7 +112,7 @@ func PrintResourceUsage(resources []*ContainerResources, field string, reverse b
 	fmt.Println(columnize.SimpleFormat(rows))
 }
 
-func PrintContainerMetrics(containerMetrics []*ContainerMetrics, metric_type MetricType, duration time.Duration, field string, reverse bool) {
+func PrintContainerMetrics(containerMetrics []*ContainerMetrics, metric_type v1.ResourceName, duration time.Duration, field string, reverse bool) {
 
 	sort.Slice(containerMetrics, func(i, j int) bool {
 		return cmp(containerMetrics, field, i, j, reverse)
@@ -120,9 +121,9 @@ func PrintContainerMetrics(containerMetrics []*ContainerMetrics, metric_type Met
 	var mode_or_avg string
 
 	switch metric_type {
-	case MEM:
+	case v1.ResourceMemory:
 		mode_or_avg = "Mode"
-	case CPU:
+	case v1.ResourceCPU:
 		mode_or_avg = "Avg"
 	}
 

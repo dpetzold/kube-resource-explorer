@@ -7,14 +7,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"google.golang.org/api/iterator"
 	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
+	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-)
-
-type MetricType string
-
-const (
-	MEM = MetricType("mem")
-	CPU = MetricType("cpu")
 )
 
 type ContainerMetrics struct {
@@ -22,7 +16,7 @@ type ContainerMetrics struct {
 	PodName       string
 	NodeName      string
 
-	MetricType MetricType
+	MetricType v1.ResourceName
 	Min        *resource.Quantity
 	Max        *resource.Quantity
 	Avg        *resource.Quantity
@@ -62,9 +56,9 @@ func (m *ContainerMetrics) fmtMem() []string {
 
 func (m *ContainerMetrics) toSlice() []string {
 	switch m.MetricType {
-	case MEM:
+	case v1.ResourceMemory:
 		return m.fmtMem()
-	case CPU:
+	case v1.ResourceCPU:
 		return m.fmtCpu()
 	}
 
@@ -111,7 +105,7 @@ func evaluateMemMetrics(it *monitoring.TimeSeriesIterator) *ContainerMetrics {
 	min, max := MinMax_int64(data)
 	format := resource.BinarySI
 	return &ContainerMetrics{
-		MetricType: MEM,
+		MetricType: v1.ResourceMemory,
 		Last:       resource.NewQuantity(int64(points[0].Value.GetInt64Value()), format),
 		Min:        resource.NewQuantity(min, format),
 		Max:        resource.NewQuantity(max, format),
@@ -161,7 +155,7 @@ func evaluateCpuMetrics(it *monitoring.TimeSeriesIterator) *ContainerMetrics {
 
 	format := resource.DecimalSI
 	return &ContainerMetrics{
-		MetricType: CPU,
+		MetricType: v1.ResourceCPU,
 		Last:       resource.NewMilliQuantity(data[0], format),
 		Min:        resource.NewMilliQuantity(min, format),
 		Max:        resource.NewMilliQuantity(max, format),

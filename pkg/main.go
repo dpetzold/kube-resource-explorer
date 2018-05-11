@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/clientcmd"
@@ -69,12 +70,12 @@ func main() {
 		}
 
 		c := NewStackDriverClient(*project)
-		var metric_type MetricType
+		var metric_type v1.ResourceName
 
 		if *mem_only {
-			metric_type = MEM
+			metric_type = v1.ResourceMemory
 		} else if *cpu_only {
-			metric_type = CPU
+			metric_type = v1.ResourceCPU
 		} else {
 			panic("Unknown metric type")
 		}

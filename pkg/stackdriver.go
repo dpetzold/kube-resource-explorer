@@ -9,6 +9,7 @@ import (
 	monitoring "cloud.google.com/go/monitoring/apiv3"
 	log "github.com/Sirupsen/logrus"
 
+	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
@@ -80,7 +81,7 @@ func (s *StackDriverClient) getTimeSeries(filter_map map[string]string, duration
 	return s.client.ListTimeSeries(s.ctx, req)
 }
 
-func (s *StackDriverClient) getContainerMetrics(container_name string, pod_uid types.UID, duration time.Duration, metric_type MetricType) *ContainerMetrics {
+func (s *StackDriverClient) getContainerMetrics(container_name string, pod_uid types.UID, duration time.Duration, metric_type v1.ResourceName) *ContainerMetrics {
 
 	var m *ContainerMetrics
 
@@ -90,12 +91,12 @@ func (s *StackDriverClient) getContainerMetrics(container_name string, pod_uid t
 	}
 
 	switch metric_type {
-	case MEM:
+	case v1.ResourceMemory:
 		filter["metric.type"] = "container.googleapis.com/container/memory/bytes_used"
 		filter["metric.label.memory_type"] = "non-evictable"
 		it := s.getTimeSeries(filter, duration)
 		m = evaluateMemMetrics(it)
-	case CPU:
+	case v1.ResourceCPU:
 		filter["metric.type"] = "container.googleapis.com/container/cpu/usage_time"
 		it := s.getTimeSeries(filter, duration)
 		m = evaluateCpuMetrics(it)
