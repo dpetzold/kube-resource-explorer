@@ -60,7 +60,7 @@ func fmtPercent(p int64) string {
 	return fmt.Sprintf("%d%%", p)
 }
 
-func PrintResourceUsage(resources []*ContainerResources, field string, reverse bool) {
+func PrintResourceUsage(capacity v1.ResourceList, resources []*ContainerResources, field string, reverse bool) {
 
 	sort.Slice(resources, func(i, j int) bool {
 		return cmp(resources, field, i, j, reverse)
@@ -77,7 +77,7 @@ func PrintResourceUsage(resources []*ContainerResources, field string, reverse b
 		totalCpuReq.Add(*u.CpuReq)
 		totalCpuLimit.Add(*u.CpuLimit)
 		totalMemoryReq.Add(*u.MemReq)
-		totalMemoryLimit.Add(*u.MemReq)
+		totalMemoryLimit.Add(*u.MemLimit)
 
 		row := strings.Join([]string{
 			u.Namespace,
@@ -96,17 +96,22 @@ func PrintResourceUsage(resources []*ContainerResources, field string, reverse b
 
 	rows = append(rows, "--------- | ---- | ------ | ------- | -------- | --------- | ------ | ------- | -------- | ---------")
 
+	percentCpuReq := float64(totalCpuReq.MilliValue()) / float64(capacity.Cpu().MilliValue()) * 100
+	percentCpuLimit := float64(totalCpuLimit.MilliValue()) / float64(capacity.Cpu().MilliValue()) * 100
+	percentMemoryReq := float64(totalMemoryReq.Value()) / float64(capacity.Memory().Value()) * 100
+	percentMemoryLimit := float64(totalMemoryLimit.Value()) / float64(capacity.Memory().Value()) * 100
+
 	rows = append(rows, strings.Join([]string{
 		"Total",
 		"",
-		QuantityStr(&totalCpuReq, "m"),
-		"",
-		QuantityStr(&totalCpuLimit, "m"),
-		"",
-		QuantityStr(&totalMemoryReq, "Mi"),
-		"",
-		QuantityStr(&totalMemoryLimit, "Mi"),
-		"",
+		fmt.Sprintf("%s/%s", QuantityStr(&totalCpuReq, "m"), QuantityStr(capacity.Cpu(), "m")),
+		fmtPercent(int64(percentCpuReq)),
+		fmt.Sprintf("%s/%s", QuantityStr(&totalCpuLimit, "m"), QuantityStr(capacity.Cpu(), "m")),
+		fmtPercent(int64(percentCpuLimit)),
+		fmt.Sprintf("%s/%s", QuantityStr(&totalMemoryReq, "Mi"), QuantityStr(capacity.Memory(), "Mi")),
+		fmtPercent(int64(percentMemoryReq)),
+		fmt.Sprintf("%s/%s", QuantityStr(&totalMemoryLimit, "Mi"), QuantityStr(capacity.Memory(), "Mi")),
+		fmtPercent(int64(percentMemoryLimit)),
 	}, "| "))
 
 	fmt.Println(columnize.SimpleFormat(rows))

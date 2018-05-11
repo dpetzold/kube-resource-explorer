@@ -92,11 +92,16 @@ func main() {
 			os.Exit(1)
 		}
 
-		resources, err := k.ListResources(*namespace)
+		resources, err := k.GetContainerResources(*namespace)
 		if err != nil {
 			panic(err.Error())
 		}
 
-		PrintResourceUsage(resources, *sort, *reverse)
+		capacity, err := k.GetClusterCapacity()
+		if err != nil {
+			panic(err.Error())
+		}
+
+		PrintResourceUsage(capacity, resources, *sort, *reverse)
 	}
 }
