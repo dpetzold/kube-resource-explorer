@@ -1,10 +1,8 @@
 package main
 
-import (
-	"k8s.io/apimachinery/pkg/api/resource"
-)
+import "k8s.io/apimachinery/pkg/api/resource"
 
-type ResourceAllocation struct {
+type ContainerResources struct {
 	Name               string
 	Namespace          string
 	CpuReq             *resource.Quantity
@@ -17,7 +15,7 @@ type ResourceAllocation struct {
 	PercentMemoryLimit int64
 }
 
-func (r ResourceAllocation) Validate(field string) bool {
+func (r ContainerResources) Validate(field string) bool {
 	for _, v := range getFields(&r) {
 		if field == v {
 			return true

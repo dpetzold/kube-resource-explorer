@@ -44,7 +44,8 @@ func containerRequestsAndLimits(container *api_v1.Container) (reqs api_v1.Resour
 	return
 }
 
-func (k *KubeClient) listNodeResources(name string, namespace string) ([]*ResourceAllocation, error) {
+func (k *KubeClient) listNodeResources(name string, namespace string) (resources []*ContainerResources, err error) {
+
 	mc := k.clientset.Core().Nodes()
 	node, err := mc.Get(name, metav1.GetOptions{})
 	if err != nil {
@@ -75,8 +76,6 @@ func (k *KubeClient) listNodeResources(name string, namespace string) ([]*Resour
 		allocatable = node.Status.Allocatable
 	}
 
-	var resourceAllocation []*ResourceAllocation
-
 	// https://github.com/kubernetes/kubernetes/blob/master/pkg/printers/internalversion/describe.go#L2970
 	for _, pod := range nodeNonTerminatedPodsList.Items {
 		for _, container := range pod.Spec.Containers {
@@ -87,7 +86,7 @@ func (k *KubeClient) listNodeResources(name string, namespace string) ([]*Resour
 			percentMemoryReq := float64(memoryReq.Value()) / float64(allocatable.Memory().Value()) * 100
 			percentMemoryLimit := float64(memoryLimit.Value()) / float64(allocatable.Memory().Value()) * 100
 
-			resourceAllocation = append(resourceAllocation, &ResourceAllocation{
+			resources = append(resources, &ContainerResources{
 				Name:               fmt.Sprintf("%s/%s", pod.GetName(), container.Name),
 				Namespace:          pod.GetNamespace(),
 				CpuReq:             &cpuReq,
@@ -102,45 +101,41 @@ func (k *KubeClient) listNodeResources(name string, namespace string) ([]*Resour
 		}
 	}
 
-	return resourceAllocation, nil
+	return resources, nil
 }
 
-func (k *KubeClient) ListResources(namespace string) ([]*ResourceAllocation, error) {
+func (k *KubeClient) ListResources(namespace string) (resources []*ContainerResources, err error) {
 	nodes, err := k.clientset.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
-
-	var resourceAllocation []*ResourceAllocation
 
 	for _, node := range nodes.Items {
 		nodeUsage, err := k.listNodeResources(node.GetName(), namespace)
 		if err != nil {
 			return nil, err
 		}
-		resourceAllocation = append(resourceAllocation, nodeUsage...)
+		resources = append(resources, nodeUsage...)
 	}
 
-	return resourceAllocation, nil
+	return resources, nil
 }
 
-func (k *KubeClient) TotalResources(namespace string) ([]*ResourceAllocation, error) {
+func (k *KubeClient) TotalResources(namespace string) (resources []*ContainerResources, err error) {
 	nodes, err := k.clientset.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
-
-	var resourceAllocation []*ResourceAllocation
 
 	for _, node := range nodes.Items {
 		nodeUsage, err := k.listNodeResources(node.GetName(), namespace)
 		if err != nil {
 			return nil, err
 		}
-		resourceAllocation = append(resourceAllocation, nodeUsage...)
+		resources = append(resources, nodeUsage...)
 	}
 
-	return resourceAllocation, nil
+	return resources, nil
 }
 
 func (k *KubeClient) getActivePods(namespace string) []api_v1.Pod {
@@ -164,11 +159,9 @@ func (k *KubeClient) getActivePods(namespace string) []api_v1.Pod {
 	return activePods.Items
 }
 
-func (k *KubeClient) getMetrics(s *StackDriverClient, namespace string, duration time.Duration, metric_type MetricType) []*ContainerMetrics {
+func (k *KubeClient) getMetrics(s *StackDriverClient, namespace string, duration time.Duration, metric_type MetricType) (metrics []*ContainerMetrics) {
 
 	activePods := k.getActivePods(namespace)
-
-	var metrics []*ContainerMetrics
 
 	for _, pod := range activePods {
 
