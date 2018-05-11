@@ -5,7 +5,6 @@ import (
 	"time"
 
 	api_v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"
@@ -23,13 +22,16 @@ func NewKubeClient(
 	}
 }
 
-func (k *KubeClient) getActivePods(namespace string) []api_v1.Pod {
+func (k *KubeClient) getActivePods(namespace, nodeName string) ([]api_v1.Pod, error) {
 
-	fieldSelector, err := fields.ParseSelector(
-		fmt.Sprintf("status.phase!=%s,status.phase!=%s", string(api_v1.PodSucceeded), string(api_v1.PodFailed)),
-	)
+	selector := fmt.Sprintf("status.phase!=%s,status.phase!=%s", string(api_v1.PodSucceeded), string(api_v1.PodFailed))
+	if nodeName != "" {
+		selector += fmt.Sprintf(",spec.nodeName=%s", nodeName)
+	}
+
+	fieldSelector, err := fields.ParseSelector(selector)
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
 
 	activePods, err := k.clientset.Core().Pods(
@@ -38,10 +40,10 @@ func (k *KubeClient) getActivePods(namespace string) []api_v1.Pod {
 		metav1.ListOptions{FieldSelector: fieldSelector.String()},
 	)
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
 
-	return activePods.Items
+	return activePods.Items, err
 }
 
 func containerRequestsAndLimits(container *api_v1.Container) (reqs api_v1.ResourceList, limits api_v1.ResourceList) {
@@ -65,7 +67,15 @@ func containerRequestsAndLimits(container *api_v1.Container) (reqs api_v1.Resour
 	return
 }
 
-func (k *KubeClient) getNodeResources(nodeName string, namespace string) (resources []*ContainerResources, err error) {
+func getNodeCapacity(node *api_v1.Node) api_v1.ResourceList {
+	allocatable := node.Status.Capacity
+	if len(node.Status.Allocatable) > 0 {
+		allocatable = node.Status.Allocatable
+	}
+	return allocatable
+}
+
+func (k *KubeClient) getNodeResources(namespace, nodeName string) (resources []*ContainerResources, err error) {
 
 	mc := k.clientset.Core().Nodes()
 	node, err := mc.Get(nodeName, metav1.GetOptions{})
@@ -73,32 +83,15 @@ func (k *KubeClient) getNodeResources(nodeName string, namespace string) (resour
 		return nil, err
 	}
 
-	fieldSelector, err := fields.ParseSelector(
-		fmt.Sprintf("spec.nodeName=%s,status.phase!=%s,status.phase!=%s",
-			nodeName, string(api_v1.PodSucceeded), string(api_v1.PodFailed)),
-	)
+	activePodsList, err := k.getActivePods(namespace, nodeName)
 	if err != nil {
 		return nil, err
 	}
 
-	activePodsList, err := k.clientset.Core().Pods(
-		namespace,
-	).List(
-		metav1.ListOptions{FieldSelector: fieldSelector.String()},
-	)
-	if err != nil {
-		if !errors.IsForbidden(err) {
-			return nil, err
-		}
-	}
-
-	allocatable := node.Status.Capacity
-	if len(node.Status.Allocatable) > 0 {
-		allocatable = node.Status.Allocatable
-	}
+	capacity := getNodeCapacity(node)
 
 	// https://github.com/kubernetes/kubernetes/blob/master/pkg/printers/internalversion/describe.go#L2970
-	for _, pod := range activePodsList.Items {
+	for _, pod := range activePodsList {
 		for _, container := range pod.Spec.Containers {
 			req, limit := containerRequestsAndLimits(&container)
 
@@ -112,12 +105,12 @@ func (k *KubeClient) getNodeResources(nodeName string, namespace string) (resour
 				Namespace:          pod.GetNamespace(),
 				CpuReq:             &cpuReq,
 				CpuLimit:           &cpuLimit,
-				PercentCpuReq:      calcCpuPercentage(cpuReq, allocatable),
-				PercentCpuLimit:    calcCpuPercentage(cpuLimit, allocatable),
+				PercentCpuReq:      calcCpuPercentage(cpuReq, capacity),
+				PercentCpuLimit:    calcCpuPercentage(cpuLimit, capacity),
 				MemReq:             &memoryReq,
 				MemLimit:           &memoryLimit,
-				PercentMemoryReq:   calcMemoryPercentage(memoryReq, allocatable),
-				PercentMemoryLimit: calcMemoryPercentage(memoryLimit, allocatable),
+				PercentMemoryReq:   calcMemoryPercentage(memoryReq, capacity),
+				PercentMemoryLimit: calcMemoryPercentage(memoryLimit, capacity),
 			})
 		}
 	}
@@ -132,7 +125,7 @@ func (k *KubeClient) GetContainerResources(namespace string) (resources []*Conta
 	}
 
 	for _, node := range nodes.Items {
-		nodeUsage, err := k.getNodeResources(node.GetName(), namespace)
+		nodeUsage, err := k.getNodeResources(namespace, node.GetName())
 		if err != nil {
 			return nil, err
 		}
@@ -142,38 +135,38 @@ func (k *KubeClient) GetContainerResources(namespace string) (resources []*Conta
 	return resources, nil
 }
 
-func (k *KubeClient) GetClusterCapacity() (resources api_v1.ResourceList, err error) {
+func (k *KubeClient) GetClusterCapacity() (capacity api_v1.ResourceList, err error) {
 	nodes, err := k.clientset.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	resources = api_v1.ResourceList{}
+	capacity = api_v1.ResourceList{}
 
 	for _, node := range nodes.Items {
 
-		allocatable := node.Status.Capacity
-		if len(node.Status.Allocatable) > 0 {
-			allocatable = node.Status.Allocatable
-		}
+		allocatable := getNodeCapacity(&node)
 
 		for name, quantity := range allocatable {
-			if value, ok := resources[name]; ok {
+			if value, ok := capacity[name]; ok {
 				value.Add(quantity)
-				resources[name] = value
+				capacity[name] = value
 			} else {
-				resources[name] = *quantity.Copy()
+				capacity[name] = *quantity.Copy()
 			}
 		}
 
 	}
 
-	return resources, nil
+	return capacity, nil
 }
 
 func (k *KubeClient) getMetrics(s *StackDriverClient, namespace string, duration time.Duration, metric_type api_v1.ResourceName) (metrics []*ContainerMetrics) {
 
-	activePods := k.getActivePods(namespace)
+	activePods, err := k.getActivePods(namespace, "")
+	if err != nil {
+		panic(err.Error())
+	}
 
 	for _, pod := range activePods {
 
