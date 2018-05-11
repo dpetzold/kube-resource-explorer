@@ -1,14 +1,11 @@
 package main
 
 import (
-	"fmt"
-
 	monitoring "cloud.google.com/go/monitoring/apiv3"
 	log "github.com/Sirupsen/logrus"
 	"google.golang.org/api/iterator"
 	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
 	"k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 type ContainerMetrics struct {
@@ -17,40 +14,34 @@ type ContainerMetrics struct {
 	NodeName      string
 
 	MetricType v1.ResourceName
-	Min        *resource.Quantity
-	Max        *resource.Quantity
-	Avg        *resource.Quantity
-	Mode       *resource.Quantity
-	Last       *resource.Quantity
-	DataPoints int64
-}
+	MemoryMin  *MemoryResource
+	MemoryMax  *MemoryResource
+	MemoryMode *MemoryResource
+	MemoryLast *MemoryResource
 
-func QuantityStr(quantity *resource.Quantity, unit string) string {
-	switch unit {
-	case "m":
-		return fmt.Sprintf("%vm", quantity.MilliValue())
-	case "Mi":
-		return fmt.Sprintf("%vMi", quantity.Value()/(1024*1024))
-	default:
-		return quantity.String()
-	}
+	CpuMin  *CpuResource
+	CpuMax  *CpuResource
+	CpuAvg  *CpuResource
+	CpuLast *CpuResource
+
+	DataPoints int64
 }
 
 func (m *ContainerMetrics) fmtCpu() []string {
 	return []string{
-		QuantityStr(m.Last, "m"),
-		QuantityStr(m.Min, "m"),
-		QuantityStr(m.Max, "m"),
-		QuantityStr(m.Avg, "m"),
+		m.CpuLast.String(),
+		m.CpuMin.String(),
+		m.CpuMax.String(),
+		m.CpuAvg.String(),
 	}
 }
 
 func (m *ContainerMetrics) fmtMem() []string {
 	return []string{
-		QuantityStr(m.Last, "Mi"),
-		QuantityStr(m.Min, "Mi"),
-		QuantityStr(m.Max, "Mi"),
-		QuantityStr(m.Mode, "Mi"),
+		m.MemoryLast.String(),
+		m.MemoryMin.String(),
+		m.MemoryMax.String(),
+		m.MemoryMode.String(),
 	}
 }
 
@@ -103,13 +94,12 @@ func evaluateMemMetrics(it *monitoring.TimeSeriesIterator) *ContainerMetrics {
 	sortPointsAsc(points)
 
 	min, max := MinMax_int64(data)
-	format := resource.BinarySI
 	return &ContainerMetrics{
 		MetricType: v1.ResourceMemory,
-		Last:       resource.NewQuantity(int64(points[0].Value.GetInt64Value()), format),
-		Min:        resource.NewQuantity(min, format),
-		Max:        resource.NewQuantity(max, format),
-		Mode:       resource.NewQuantity(mode_int64(set), format),
+		MemoryLast: NewMemoryResource(points[0].Value.GetInt64Value()),
+		MemoryMin:  NewMemoryResource(min),
+		MemoryMax:  NewMemoryResource(max),
+		MemoryMode: NewMemoryResource(mode_int64(set)),
 		DataPoints: int64(len(points)),
 	}
 }
@@ -153,36 +143,12 @@ func evaluateCpuMetrics(it *monitoring.TimeSeriesIterator) *ContainerMetrics {
 
 	min, max := MinMax_int64(data)
 
-	format := resource.DecimalSI
 	return &ContainerMetrics{
 		MetricType: v1.ResourceCPU,
-		Last:       resource.NewMilliQuantity(data[0], format),
-		Min:        resource.NewMilliQuantity(min, format),
-		Max:        resource.NewMilliQuantity(max, format),
-		Avg:        resource.NewMilliQuantity(int64(average_int64(data)), format),
+		CpuLast:    NewCpuResource(data[0]),
+		CpuMin:     NewCpuResource(min),
+		CpuMax:     NewCpuResource(max),
+		CpuAvg:     NewCpuResource(int64(average_int64(data))),
 		DataPoints: int64(len(points)),
 	}
-}
-
-func GroupMetricsBy(metrics []*ContainerMetrics, fields ...string) map[string]map[string]map[string]*ContainerMetrics {
-	grouping := make(map[string]map[string]map[string]*ContainerMetrics)
-
-	for _, m := range metrics {
-		if n, ok := grouping[m.NodeName]; ok {
-			if p, ok := n[m.PodName]; ok {
-				p[m.ContainerName] = m
-			} else {
-				d := make(map[string]*ContainerMetrics)
-				n[m.PodName] = d
-				n[m.PodName][m.ContainerName] = m
-			}
-		} else {
-			d2 := make(map[string]map[string]*ContainerMetrics)
-			grouping[m.NodeName] = d2
-			d := make(map[string]*ContainerMetrics)
-			grouping[m.NodeName][m.PodName] = d
-			grouping[m.NodeName][m.PodName][m.ContainerName] = m
-		}
-	}
-	return grouping
 }

@@ -1,33 +1,69 @@
 package main
 
 import (
-	"k8s.io/api/core/v1"
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/api/resource"
 )
-
-type ContainerResources struct {
-	Name               string
-	Namespace          string
-	CpuReq             *resource.Quantity
-	CpuLimit           *resource.Quantity
-	PercentCpuReq      int64
-	PercentCpuLimit    int64
-	MemReq             *resource.Quantity
-	MemLimit           *resource.Quantity
-	PercentMemoryReq   int64
-	PercentMemoryLimit int64
-}
 
 func calcPercentage(dividend, divisor int64) int64 {
 	return int64(float64(dividend) / float64(divisor) * 100)
 }
 
-func calcCpuPercentage(dividend resource.Quantity, divisor v1.ResourceList) int64 {
-	return calcPercentage(dividend.MilliValue(), divisor.Cpu().MilliValue())
+type MemoryResource struct {
+	*resource.Quantity
 }
 
-func calcMemoryPercentage(dividend resource.Quantity, divisor v1.ResourceList) int64 {
-	return calcPercentage(dividend.Value(), divisor.Memory().Value())
+func NewMemoryResource(value int64) *MemoryResource {
+	return &MemoryResource{resource.NewQuantity(value, resource.BinarySI)}
+}
+
+func (r *MemoryResource) calcPercentage(divisor *resource.Quantity) int64 {
+	return calcPercentage(r.Value(), divisor.Value())
+}
+
+func (r *MemoryResource) String() string {
+	// XXX: Support more units
+	return fmt.Sprintf("%vMi", r.Value()/(1024*1024))
+}
+
+func (r *MemoryResource) ToQuantity() *resource.Quantity {
+	return resource.NewQuantity(r.Value(), resource.BinarySI)
+}
+
+type CpuResource struct {
+	*resource.Quantity
+}
+
+func NewCpuResource(value int64) *CpuResource {
+	r := resource.NewMilliQuantity(value, resource.DecimalSI)
+	return &CpuResource{r}
+}
+
+func (r *CpuResource) String() string {
+	// XXX: Support more units
+	return fmt.Sprintf("%vm", r.MilliValue())
+}
+
+func (r *CpuResource) calcPercentage(divisor *resource.Quantity) int64 {
+	return calcPercentage(r.MilliValue(), divisor.MilliValue())
+}
+
+func (r *CpuResource) ToQuantity() *resource.Quantity {
+	return resource.NewMilliQuantity(r.MilliValue(), resource.DecimalSI)
+}
+
+type ContainerResources struct {
+	Name               string
+	Namespace          string
+	CpuReq             *CpuResource
+	CpuLimit           *CpuResource
+	PercentCpuReq      int64
+	PercentCpuLimit    int64
+	MemReq             *MemoryResource
+	MemLimit           *MemoryResource
+	PercentMemoryReq   int64
+	PercentMemoryLimit int64
 }
 
 func (r ContainerResources) Validate(field string) bool {

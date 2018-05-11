@@ -69,7 +69,6 @@ func main() {
 			os.Exit(1)
 		}
 
-		stackDriver := NewStackDriverClient(*project)
 		var resourceName v1.ResourceName
 
 		if *mem_only {
@@ -80,13 +79,7 @@ func main() {
 			panic("Unknown metric type")
 		}
 
-		activePods, err := k.getActivePods(*namespace, "")
-		if err != nil {
-			panic(err.Error())
-		}
-
-		metrics := stackDriver.getMetrics(activePods, *duration, resourceName)
-		PrintContainerMetrics(metrics, resourceName, *duration, *sort, *reverse)
+		k.historical(*project, *namespace, resourceName, *duration, *sort, *reverse)
 
 	} else {
 
@@ -97,16 +90,6 @@ func main() {
 			os.Exit(1)
 		}
 
-		resources, err := k.GetContainerResources(*namespace)
-		if err != nil {
-			panic(err.Error())
-		}
-
-		capacity, err := k.GetClusterCapacity()
-		if err != nil {
-			panic(err.Error())
-		}
-
-		PrintResourceUsage(capacity, resources, *sort, *reverse)
+		k.resourceUsage(*namespace, *sort, *reverse)
 	}
 }

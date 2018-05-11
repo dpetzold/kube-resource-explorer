@@ -10,17 +10,17 @@ import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 	"k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 func _cmp(f1, f2 interface{}, reverse bool, field string) bool {
 
-	if q1, ok := f1.(*resource.Quantity); ok {
-		q2 := f2.(*resource.Quantity)
+	if q1, ok := f1.(*CpuResource); ok {
+		q2 := f2.(*CpuResource)
+		v := q2.ToQuantity()
 		if reverse {
-			return q1.Cmp(*q2) < 0
+			return q1.Cmp(*v) < 0
 		}
-		return q1.Cmp(*q2) > 0
+		return q1.Cmp(*v) > 0
 	}
 
 	if v1, ok := f1.(int64); ok {
@@ -71,24 +71,25 @@ func PrintResourceUsage(capacity v1.ResourceList, resources []*ContainerResource
 		"--------- | ---- | ------ | ------- | -------- | --------- | ------ | ------- | -------- | ---------",
 	}
 
-	totalCpuReq, totalCpuLimit, totalMemoryReq, totalMemoryLimit := resource.Quantity{}, resource.Quantity{}, resource.Quantity{}, resource.Quantity{}
+	totalCpuReq, totalCpuLimit := NewCpuResource(0), NewCpuResource(0)
+	totalMemoryReq, totalMemoryLimit := NewMemoryResource(0), NewMemoryResource(0)
 
 	for _, u := range resources {
-		totalCpuReq.Add(*u.CpuReq)
-		totalCpuLimit.Add(*u.CpuLimit)
-		totalMemoryReq.Add(*u.MemReq)
-		totalMemoryLimit.Add(*u.MemLimit)
+		totalCpuReq.Add(*u.CpuReq.ToQuantity())
+		totalCpuLimit.Add(*u.CpuLimit.ToQuantity())
+		totalMemoryReq.Add(*u.MemReq.ToQuantity())
+		totalMemoryLimit.Add(*u.MemLimit.ToQuantity())
 
 		row := strings.Join([]string{
 			u.Namespace,
 			u.Name,
-			QuantityStr(u.CpuReq, "m"),
+			u.CpuReq.String(),
 			fmtPercent(u.PercentCpuReq),
-			QuantityStr(u.CpuLimit, "m"),
+			u.CpuLimit.String(),
 			fmtPercent(u.PercentCpuLimit),
-			QuantityStr(u.MemReq, "Mi"),
+			u.MemReq.String(),
 			fmtPercent(u.PercentMemoryReq),
-			QuantityStr(u.MemLimit, "Mi"),
+			u.MemLimit.String(),
 			fmtPercent(u.PercentMemoryLimit),
 		}, "| ")
 		rows = append(rows, row)
@@ -96,17 +97,20 @@ func PrintResourceUsage(capacity v1.ResourceList, resources []*ContainerResource
 
 	rows = append(rows, "--------- | ---- | ------ | ------- | -------- | --------- | ------ | ------- | -------- | ---------")
 
+	cpuCapacity := NewCpuResource(capacity.Cpu().MilliValue())
+	memoryCapacity := NewMemoryResource(capacity.Memory().Value())
+
 	rows = append(rows, strings.Join([]string{
 		"Total",
 		"",
-		fmt.Sprintf("%s/%s", QuantityStr(&totalCpuReq, "m"), QuantityStr(capacity.Cpu(), "m")),
-		fmtPercent(calcCpuPercentage(totalCpuReq, capacity)),
-		fmt.Sprintf("%s/%s", QuantityStr(&totalCpuLimit, "m"), QuantityStr(capacity.Cpu(), "m")),
-		fmtPercent(calcCpuPercentage(totalCpuLimit, capacity)),
-		fmt.Sprintf("%s/%s", QuantityStr(&totalMemoryReq, "Mi"), QuantityStr(capacity.Memory(), "Mi")),
-		fmtPercent(calcMemoryPercentage(totalMemoryReq, capacity)),
-		fmt.Sprintf("%s/%s", QuantityStr(&totalMemoryLimit, "Mi"), QuantityStr(capacity.Memory(), "Mi")),
-		fmtPercent(calcMemoryPercentage(totalMemoryLimit, capacity)),
+		fmt.Sprintf("%s/%s", totalCpuReq.String(), cpuCapacity.String()),
+		fmtPercent(totalCpuReq.calcPercentage(capacity.Cpu())),
+		fmt.Sprintf("%s/%s", totalCpuLimit.String(), cpuCapacity.String()),
+		fmtPercent(totalCpuLimit.calcPercentage(capacity.Cpu())),
+		fmt.Sprintf("%s/%s", totalMemoryReq.String(), memoryCapacity.String()),
+		fmtPercent(totalMemoryReq.calcPercentage(capacity.Memory())),
+		fmt.Sprintf("%s/%s", totalMemoryLimit.String(), memoryCapacity.String()),
+		fmtPercent(totalMemoryLimit.calcPercentage(capacity.Memory())),
 	}, "| "))
 
 	fmt.Println(columnize.SimpleFormat(rows))
