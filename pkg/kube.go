@@ -6,7 +6,6 @@ import (
 
 	api_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"
@@ -24,8 +23,8 @@ func NewKubeClient(
 	}
 }
 
-func containerRequestsAndLimits(container *api_v1.Container) (reqs map[api_v1.ResourceName]resource.Quantity, limits map[api_v1.ResourceName]resource.Quantity) {
-	reqs, limits = map[api_v1.ResourceName]resource.Quantity{}, map[api_v1.ResourceName]resource.Quantity{}
+func containerRequestsAndLimits(container *api_v1.Container) (reqs api_v1.ResourceList, limits api_v1.ResourceList) {
+	reqs, limits = api_v1.ResourceList{}, api_v1.ResourceList{}
 
 	for name, quantity := range container.Resources.Requests {
 		if _, ok := reqs[name]; ok {
@@ -144,7 +143,7 @@ func (k *KubeClient) TotalResources(namespace string) ([]*ResourceAllocation, er
 	return resourceAllocation, nil
 }
 
-func (k *KubeClient) getMetrics(s *StackDriverClient, namespace string, duration time.Duration, metric_type MetricType) []*ContainerMetrics {
+func (k *KubeClient) getActivePods(namespace string) []api_v1.Pod {
 
 	fieldSelector, err := fields.ParseSelector(
 		fmt.Sprintf("status.phase!=%s,status.phase!=%s", string(api_v1.PodSucceeded), string(api_v1.PodFailed)),
@@ -153,7 +152,7 @@ func (k *KubeClient) getMetrics(s *StackDriverClient, namespace string, duration
 		panic(err.Error())
 	}
 
-	nodeNonTerminatedPodsList, err := k.clientset.Core().Pods(
+	activePods, err := k.clientset.Core().Pods(
 		namespace,
 	).List(
 		metav1.ListOptions{FieldSelector: fieldSelector.String()},
@@ -162,9 +161,16 @@ func (k *KubeClient) getMetrics(s *StackDriverClient, namespace string, duration
 		panic(err.Error())
 	}
 
+	return activePods.Items
+}
+
+func (k *KubeClient) getMetrics(s *StackDriverClient, namespace string, duration time.Duration, metric_type MetricType) []*ContainerMetrics {
+
+	activePods := k.getActivePods(namespace)
+
 	var metrics []*ContainerMetrics
 
-	for _, pod := range nodeNonTerminatedPodsList.Items {
+	for _, pod := range activePods {
 
 		for _, container := range pod.Spec.Containers {
 			m := s.getContainerMetrics(container.Name, pod.ObjectMeta.UID, duration, metric_type)
