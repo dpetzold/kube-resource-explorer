@@ -30,5 +30,6 @@ func (k *KubeClient) resourceUsage(namespace, sort string, reverse bool) {
 		panic(err.Error())
 	}
 
-	PrintResourceUsage(capacity, resources, sort, reverse)
+	rows := FormatResourceUsage(capacity, resources, sort, reverse)
+	PrintResourceUsage(rows)
 }

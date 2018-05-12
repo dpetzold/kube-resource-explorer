@@ -69,6 +69,13 @@ func main() {
 			os.Exit(1)
 		}
 
+		m := ContainerMetrics{}
+
+		if !m.Validate(*sort) {
+			fmt.Printf("\"%s\" is not a valid field. Possible values are:\n\n%s\n", *sort, strings.Join(getFields(&m), ", "))
+			os.Exit(1)
+		}
+
 		var resourceName v1.ResourceName
 
 		if *mem_only {
