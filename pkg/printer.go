@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
+	"log"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -66,9 +69,9 @@ func PrintResourceUsage(capacity v1.ResourceList, resources []*ContainerResource
 		return cmp(resources, field, i, j, reverse)
 	})
 
-	rows := []string{
-		"Namespace | Name | CpuReq | CpuReq% | CpuLimit | CpuLimit% | MemReq | MemReq% | MemLimit | MemLimit%",
-		"--------- | ---- | ------ | ------- | -------- | --------- | ------ | ------- | -------- | ---------",
+	rows := [][]string{
+		{"Namespace", "Name", "CpuReq", "CpuReq%", "CpuLimit", "CpuLimit%", "MemReq", "MemReq%", "MemLimit", "MemLimit%"},
+		{"---------", "----", "------", "-------", "--------", "---------", "------", "-------", "--------", "---------"},
 	}
 
 	totalCpuReq, totalCpuLimit := NewCpuResource(0), NewCpuResource(0)
@@ -80,7 +83,7 @@ func PrintResourceUsage(capacity v1.ResourceList, resources []*ContainerResource
 		totalMemoryReq.Add(*u.MemReq.ToQuantity())
 		totalMemoryLimit.Add(*u.MemLimit.ToQuantity())
 
-		row := strings.Join([]string{
+		rows = append(rows, []string{
 			u.Namespace,
 			u.Name,
 			u.CpuReq.String(),
@@ -91,16 +94,15 @@ func PrintResourceUsage(capacity v1.ResourceList, resources []*ContainerResource
 			fmtPercent(u.PercentMemoryReq),
 			u.MemLimit.String(),
 			fmtPercent(u.PercentMemoryLimit),
-		}, "| ")
-		rows = append(rows, row)
+		})
 	}
 
-	rows = append(rows, "--------- | ---- | ------ | ------- | -------- | --------- | ------ | ------- | -------- | ---------")
+	rows = append(rows, []string{"---------", "----", "------", "-------", "--------", "---------", "------", "-------", "--------", "---------"})
 
 	cpuCapacity := NewCpuResource(capacity.Cpu().MilliValue())
 	memoryCapacity := NewMemoryResource(capacity.Memory().Value())
 
-	rows = append(rows, strings.Join([]string{
+	rows = append(rows, []string{
 		"Total",
 		"",
 		fmt.Sprintf("%s/%s", totalCpuReq.String(), cpuCapacity.String()),
@@ -111,9 +113,16 @@ func PrintResourceUsage(capacity v1.ResourceList, resources []*ContainerResource
 		fmtPercent(totalMemoryReq.calcPercentage(capacity.Memory())),
 		fmt.Sprintf("%s/%s", totalMemoryLimit.String(), memoryCapacity.String()),
 		fmtPercent(totalMemoryLimit.calcPercentage(capacity.Memory())),
-	}, "| "))
+	})
 
-	fmt.Println(columnize.SimpleFormat(rows))
+	w := csv.NewWriter(os.Stdout)
+	w.WriteAll(rows)
+
+	if err := w.Error(); err != nil {
+		log.Fatalln("error writing csv:", err)
+	}
+
+	// fmt.Println(columnize.SimpleFormat(rows))
 }
 
 func PrintContainerMetrics(containerMetrics []*ContainerMetrics, metric_type v1.ResourceName, duration time.Duration, field string, reverse bool) {
