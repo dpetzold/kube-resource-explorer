@@ -13,17 +13,35 @@ import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 func _cmp(f1, f2 interface{}, reverse bool, field string) bool {
 
-	if q1, ok := f1.(*CpuResource); ok {
-		q2 := f2.(*CpuResource)
-		v := q2.ToQuantity()
+	if q1, ok := f1.(*resource.Quantity); ok {
+		q2 := f2.(*resource.Quantity)
 		if reverse {
-			return q1.Cmp(*v) < 0
+			return q1.Cmp(*q2) < 0
 		}
-		return q1.Cmp(*v) > 0
+		return q1.Cmp(*q2) > 0
+	}
+
+	if r1, ok := f1.(*CpuResource); ok {
+		r2 := f2.(*CpuResource)
+		v := r2.ToQuantity()
+		if reverse {
+			return r1.Cmp(*v) < 0
+		}
+		return r1.Cmp(*v) > 0
+	}
+
+	if m1, ok := f1.(*MemoryResource); ok {
+		m2 := f2.(*MemoryResource)
+		v := m2.ToQuantity()
+		if reverse {
+			return m1.Cmp(*v) < 0
+		}
+		return m1.Cmp(*v) > 0
 	}
 
 	if v1, ok := f1.(int64); ok {

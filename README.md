@@ -111,18 +111,28 @@ displayed by `kubectl describe nodes` but in a easier to view format.
 
 ```
 $ ./resource-explorer -namespace kube-system -reverse -sort MemReq
-Namespace    Name                                               CpuReq  CpuReq%  CpuLimit  CpuLimit%  MemReq  MemReq%  MemLimit  MemLimit%
----------    ----                                               ------  -------  --------  ---------  ------  -------  --------  ---------
-kube-system  event-exporter-v0.1.7-5c4d9556cf-kf4tf             0m      0%       0m        0%         0Mi     0%       0Mi       0%
-kube-system  kube-proxy-gke-project-default-pool-175a4a05-mshh  100m    10%      0m        0%         0Mi     0%       0Mi       0%
-kube-system  kube-proxy-gke-project-default-pool-175a4a05-bv59  100m    10%      0m        0%         0Mi     0%       0Mi       0%
-kube-system  kube-proxy-gke-project-default-pool-175a4a05-ntfw  100m    10%      0m        0%         0Mi     0%       0Mi       0%
-kube-system  kube-dns-autoscaler-244676396-xzgs4                20m     2%       0m        0%         10Mi    0%       0Mi       0%
-kube-system  l7-default-backend-1044750973-kqh98                10m     1%       10m       1%         20Mi    0%       20Mi      0%
-kube-system  kubernetes-dashboard-768854d6dc-jh292              100m    10%      100m      10%        100Mi   3%       300Mi     11%
-kube-system  kube-dns-323615064-8nxfl                           260m    27%      0m        0%         110Mi   4%       170Mi     6%
-kube-system  fluentd-gcp-v2.0.9-4qkwk                           100m    10%      0m        0%         200Mi   7%       300Mi     11%
-kube-system  fluentd-gcp-v2.0.9-jmtpw                           100m    10%      0m        0%         200Mi   7%       300Mi     11%
-kube-system  fluentd-gcp-v2.0.9-tw9vk                           100m    10%      0m        0%         200Mi   7%       300Mi     11%
-kube-system  heapster-v1.4.3-74b5bd94bb-fz8hd                   138m    14%      138m      14%        294Mi   11%      294Mi     11%
+Namespace    Name                                                              CpuReq       CpuReq%  CpuLimit    CpuLimit%  MemReq         MemReq%  MemLimit       MemLimit%
+---------    ----                                                              ------       -------  --------    ---------  ------         -------  --------       ---------
+kube-system  kube-proxy-gke-project-default-pool-175a4a05-bv59/kube-proxy      100m         10%      0m          0%         0Mi            0%       0Mi            0%
+kube-system  event-exporter-v0.1.7-5c4d9556cf-kf4tf/prometheus-to-sd-exporter  0m           0%       0m          0%         0Mi            0%       0Mi            0%
+kube-system  fluentd-gcp-v2.0.9-jmtpw/prometheus-to-sd-exporter                0m           0%       0m          0%         0Mi            0%       0Mi            0%
+kube-system  fluentd-gcp-v2.0.9-4qkwk/prometheus-to-sd-exporter                0m           0%       0m          0%         0Mi            0%       0Mi            0%
+kube-system  kube-proxy-gke-project-default-pool-175a4a05-mshh/kube-proxy      100m         10%      0m          0%         0Mi            0%       0Mi            0%
+kube-system  heapster-v1.4.3-74b5bd94bb-fz8hd/prom-to-sd                       0m           0%       0m          0%         0Mi            0%       0Mi            0%
+kube-system  fluentd-gcp-v2.0.9-tw9vk/prometheus-to-sd-exporter                0m           0%       0m          0%         0Mi            0%       0Mi            0%
+kube-system  event-exporter-v0.1.7-5c4d9556cf-kf4tf/event-exporter             0m           0%       0m          0%         0Mi            0%       0Mi            0%
+kube-system  kube-proxy-gke-project-default-pool-175a4a05-ntfw/kube-proxy      100m         10%      0m          0%         0Mi            0%       0Mi            0%
+kube-system  kube-dns-autoscaler-244676396-xzgs4/autoscaler                    20m          2%       0m          0%         10Mi           0%       0Mi            0%
+kube-system  kube-dns-323615064-8nxfl/sidecar                                  10m          1%       0m          0%         20Mi           0%       0Mi            0%
+kube-system  kube-dns-323615064-8nxfl/dnsmasq                                  150m         15%      0m          0%         20Mi           0%       0Mi            0%
+kube-system  l7-default-backend-1044750973-kqh98/default-http-backend          10m          1%       10m         1%         20Mi           0%       20Mi           0%
+kube-system  kube-dns-323615064-8nxfl/kubedns                                  100m         10%      0m          0%         70Mi           2%       170Mi          6%
+kube-system  heapster-v1.4.3-74b5bd94bb-fz8hd/heapster-nanny                   50m          5%       50m         5%         90Mi           3%       90Mi           3%
+kube-system  kubernetes-dashboard-768854d6dc-jh292/kubernetes-dashboard        100m         10%      100m        10%        100Mi          3%       300Mi          11%
+kube-system  fluentd-gcp-v2.0.9-jmtpw/fluentd-gcp                              100m         10%      0m          0%         200Mi          7%       300Mi          11%
+kube-system  fluentd-gcp-v2.0.9-tw9vk/fluentd-gcp                              100m         10%      0m          0%         200Mi          7%       300Mi          11%
+kube-system  fluentd-gcp-v2.0.9-4qkwk/fluentd-gcp                              100m         10%      0m          0%         200Mi          7%       300Mi          11%
+kube-system  heapster-v1.4.3-74b5bd94bb-fz8hd/heapster                         88m          9%       88m         9%         204Mi          7%       204Mi          7%
+---------    ----                                                              ------       -------  --------    ---------  ------         -------  --------       ---------
+Total                                                                          1128m/2820m  40%      248m/2820m  8%         1134Mi/7936Mi  14%      1684Mi/7936Mi  21%
 ```
