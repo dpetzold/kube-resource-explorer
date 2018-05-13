@@ -259,7 +259,7 @@ func (k *KubeClient) Historical(project, namespace string, workers int, resource
 		panic(err.Error())
 	}
 
-	jobs := make(chan *MetricJob, 5)
+	jobs := make(chan *MetricJob, workers)
 	collector := make(chan *ContainerMetrics)
 
 	for i := 0; i <= workers; i++ {
