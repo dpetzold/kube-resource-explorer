@@ -31,7 +31,7 @@ func main() {
 	}
 
 	var (
-		namespace  = flag.String("namespace", "", "filter by namespace (defaults to all)")
+		namespace  = flag.String("namespace", "default", "filter by namespace (defaults to all)")
 		sort       = flag.String("sort", "CpuReq", "field to sort by")
 		reverse    = flag.Bool("reverse", false, "reverse sort output")
 		historical = flag.Bool("historical", false, "show historical info")
@@ -88,7 +88,7 @@ func main() {
 			panic("Unknown metric type")
 		}
 
-		k.historical(*project, *namespace, *workers, resourceName, *duration, *sort, *reverse, *csv)
+		k.Historical(*project, *namespace, *workers, resourceName, *duration, *sort, *reverse, *csv)
 
 	} else {
 
@@ -99,6 +99,6 @@ func main() {
 			os.Exit(1)
 		}
 
-		k.resourceUsage(*namespace, *sort, *reverse, *csv)
+		k.ResourceUsage(*namespace, *sort, *reverse, *csv)
 	}
 }

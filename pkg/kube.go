@@ -21,7 +21,7 @@ func NewKubeClient(
 	}
 }
 
-func (k *KubeClient) getActivePods(namespace, nodeName string) ([]api_v1.Pod, error) {
+func (k *KubeClient) ActivePods(namespace, nodeName string) ([]api_v1.Pod, error) {
 
 	selector := fmt.Sprintf("status.phase!=%s,status.phase!=%s", string(api_v1.PodSucceeded), string(api_v1.PodFailed))
 	if nodeName != "" {
@@ -66,7 +66,7 @@ func containerRequestsAndLimits(container *api_v1.Container) (reqs api_v1.Resour
 	return
 }
 
-func getNodeCapacity(node *api_v1.Node) api_v1.ResourceList {
+func NodeCapacity(node *api_v1.Node) api_v1.ResourceList {
 	allocatable := node.Status.Capacity
 	if len(node.Status.Allocatable) > 0 {
 		allocatable = node.Status.Allocatable
@@ -74,7 +74,7 @@ func getNodeCapacity(node *api_v1.Node) api_v1.ResourceList {
 	return allocatable
 }
 
-func (k *KubeClient) getNodeResources(namespace, nodeName string) (resources []*ContainerResources, err error) {
+func (k *KubeClient) NodeResources(namespace, nodeName string) (resources []*ContainerResources, err error) {
 
 	mc := k.clientset.Core().Nodes()
 	node, err := mc.Get(nodeName, metav1.GetOptions{})
@@ -82,12 +82,12 @@ func (k *KubeClient) getNodeResources(namespace, nodeName string) (resources []*
 		return nil, err
 	}
 
-	activePodsList, err := k.getActivePods(namespace, nodeName)
+	activePodsList, err := k.ActivePods(namespace, nodeName)
 	if err != nil {
 		return nil, err
 	}
 
-	capacity := getNodeCapacity(node)
+	capacity := NodeCapacity(node)
 
 	// https://github.com/kubernetes/kubernetes/blob/master/pkg/printers/internalversion/describe.go#L2970
 	for _, pod := range activePodsList {
@@ -124,14 +124,14 @@ func (k *KubeClient) getNodeResources(namespace, nodeName string) (resources []*
 	return resources, nil
 }
 
-func (k *KubeClient) GetContainerResources(namespace string) (resources []*ContainerResources, err error) {
+func (k *KubeClient) ContainerResources(namespace string) (resources []*ContainerResources, err error) {
 	nodes, err := k.clientset.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
 	for _, node := range nodes.Items {
-		nodeUsage, err := k.getNodeResources(namespace, node.GetName())
+		nodeUsage, err := k.NodeResources(namespace, node.GetName())
 		if err != nil {
 			return nil, err
 		}
@@ -141,7 +141,7 @@ func (k *KubeClient) GetContainerResources(namespace string) (resources []*Conta
 	return resources, nil
 }
 
-func (k *KubeClient) GetClusterCapacity() (capacity api_v1.ResourceList, err error) {
+func (k *KubeClient) ClusterCapacity() (capacity api_v1.ResourceList, err error) {
 	nodes, err := k.clientset.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -151,7 +151,7 @@ func (k *KubeClient) GetClusterCapacity() (capacity api_v1.ResourceList, err err
 
 	for _, node := range nodes.Items {
 
-		allocatable := getNodeCapacity(&node)
+		allocatable := NodeCapacity(&node)
 
 		for name, quantity := range allocatable {
 			if value, ok := capacity[name]; ok {
@@ -167,14 +167,14 @@ func (k *KubeClient) GetClusterCapacity() (capacity api_v1.ResourceList, err err
 	return capacity, nil
 }
 
-func (k *KubeClient) resourceUsage(namespace, sort string, reverse bool, csv bool) {
+func (k *KubeClient) ResourceUsage(namespace, sort string, reverse bool, csv bool) {
 
-	resources, err := k.GetContainerResources(namespace)
+	resources, err := k.ContainerResources(namespace)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	capacity, err := k.GetClusterCapacity()
+	capacity, err := k.ClusterCapacity()
 	if err != nil {
 		panic(err.Error())
 	}

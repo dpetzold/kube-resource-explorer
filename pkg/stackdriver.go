@@ -161,7 +161,7 @@ func buildTimeSeriesFilter(m map[string]string) string {
 	return strings.Join(buffer, " AND ")
 }
 
-func (s *StackDriverClient) getTimeSeries(filter_map map[string]string, duration time.Duration) *monitoring.TimeSeriesIterator {
+func (s *StackDriverClient) ListTimeSeries(filter_map map[string]string, duration time.Duration) *monitoring.TimeSeriesIterator {
 
 	filter := buildTimeSeriesFilter(filter_map)
 
@@ -188,7 +188,7 @@ func (s *StackDriverClient) getTimeSeries(filter_map map[string]string, duration
 	return s.client.ListTimeSeries(s.ctx, req)
 }
 
-func (s *StackDriverClient) getContainerMetrics(container_name string, pod_uid string, duration time.Duration, metric_type v1.ResourceName) *ContainerMetrics {
+func (s *StackDriverClient) ContainerMetrics(container_name string, pod_uid string, duration time.Duration, metric_type v1.ResourceName) *ContainerMetrics {
 
 	var m *ContainerMetrics
 
@@ -201,11 +201,11 @@ func (s *StackDriverClient) getContainerMetrics(container_name string, pod_uid s
 	case v1.ResourceMemory:
 		filter["metric.type"] = "container.googleapis.com/container/memory/bytes_used"
 		filter["metric.label.memory_type"] = "non-evictable"
-		it := s.getTimeSeries(filter, duration)
+		it := s.ListTimeSeries(filter, duration)
 		m = evaluateMemMetrics(it)
 	case v1.ResourceCPU:
 		filter["metric.type"] = "container.googleapis.com/container/cpu/usage_time"
-		it := s.getTimeSeries(filter, duration)
+		it := s.ListTimeSeries(filter, duration)
 		m = evaluateCpuMetrics(it)
 	}
 
@@ -240,7 +240,7 @@ func (s *StackDriverClient) Run(jobs chan<- *MetricJob, collector <-chan *Contai
 func (s *StackDriverClient) Worker(jobs <-chan *MetricJob, collector chan<- *ContainerMetrics) {
 
 	for job := range jobs {
-		m := s.getContainerMetrics(job.ContainerName, job.PodUID, job.Duration, job.MetricType)
+		m := s.ContainerMetrics(job.ContainerName, job.PodUID, job.Duration, job.MetricType)
 		m.PodName = job.PodName
 		collector <- m
 	}
@@ -248,13 +248,13 @@ func (s *StackDriverClient) Worker(jobs <-chan *MetricJob, collector chan<- *Con
 	close(collector)
 }
 
-func (k *KubeClient) historical(project, namespace string, workers int, resourceName v1.ResourceName, duration time.Duration, sort string, reverse bool, csv bool) {
+func (k *KubeClient) Historical(project, namespace string, workers int, resourceName v1.ResourceName, duration time.Duration, sort string, reverse bool, csv bool) {
 
 	stackDriver := NewStackDriverClient(
 		project,
 	)
 
-	activePods, err := k.getActivePods(namespace, "")
+	activePods, err := k.ActivePods(namespace, "")
 	if err != nil {
 		panic(err.Error())
 	}
