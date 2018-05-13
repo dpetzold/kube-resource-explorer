@@ -267,5 +267,6 @@ func (k *KubeClient) historical(project, namespace string, workers int, resource
 	}
 
 	metrics := stackDriver.Run(jobs, collector, activePods, duration, resourceName)
-	PrintContainerMetrics(metrics, resourceName, duration, sort, reverse)
+	rows, dataPoints := FormatContainerMetrics(metrics, resourceName, duration, sort, reverse)
+	PrintContainerMetrics(rows, duration, dataPoints)
 }

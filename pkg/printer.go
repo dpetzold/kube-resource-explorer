@@ -171,7 +171,7 @@ func PrintResourceUsage(rows [][]string) {
 	fmt.Println(columnize.SimpleFormat(formatted))
 }
 
-func PrintContainerMetrics(containerMetrics []*ContainerMetrics, metric_type v1.ResourceName, duration time.Duration, field string, reverse bool) {
+func FormatContainerMetrics(containerMetrics []*ContainerMetrics, metric_type v1.ResourceName, duration time.Duration, field string, reverse bool) (rows [][]string, total int64) {
 
 	sort.Slice(containerMetrics, func(i, j int) bool {
 		return cmp(containerMetrics, field, i, j, reverse)
@@ -186,23 +186,32 @@ func PrintContainerMetrics(containerMetrics []*ContainerMetrics, metric_type v1.
 		mode_or_avg = "Avg"
 	}
 
-	table := []string{
-		fmt.Sprintf("                        Pod/Container                         |  Last  |   Min  |   Max  | %s", mode_or_avg),
-		"------------------------------------------------------------- | ------ | ------ | ------ | --------",
-	}
+	rows = append(rows, [][]string{
+		{"Pod/Container", "Last", "Min", "Max", mode_or_avg},
+		{"-------------------------------------------------------------", "------", "------", "------", " --------"},
+	}...)
 
-	var total int64
 	for _, m := range containerMetrics {
 		row := []string{
 			fmt.Sprintf("%s/%s", m.PodName, m.ContainerName),
 		}
 		s := m.toSlice()
 		row = append(row, s...)
-		table = append(table, strings.Join(row, " | "))
+		rows = append(rows, row)
 		total += m.DataPoints
 	}
 
+	return rows, total
+}
+
+func PrintContainerMetrics(rows [][]string, duration time.Duration, total int64) {
+
 	p := message.NewPrinter(language.English)
+
+	var table []string
+	for _, row := range rows {
+		table = append(table, strings.Join(row, " | "))
+	}
 
 	fmt.Println(columnize.SimpleFormat(table))
 	fmt.Printf("\nResults shown are for a period of %s. %s data points were evaluted.\n", duration.String(), p.Sprintf("%d", total))
