@@ -10,7 +10,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"golang.org/x/net/context"
@@ -35,6 +34,16 @@ func NewStackDriverClient(project string) *StackDriverClient {
 		client:  c,
 		project: project,
 	}
+}
+
+type MetricJob struct {
+	ContainerName string
+	PodName       string
+	PodUID        string
+	Duration      time.Duration
+	MetricType    v1.ResourceName
+	jobs          <-chan *MetricJob
+	collector     chan<- *ContainerMetrics
 }
 
 func sortPointsAsc(points []*monitoringpb.Point) {
@@ -179,13 +188,13 @@ func (s *StackDriverClient) getTimeSeries(filter_map map[string]string, duration
 	return s.client.ListTimeSeries(s.ctx, req)
 }
 
-func (s *StackDriverClient) getContainerMetrics(container_name string, pod_uid types.UID, duration time.Duration, metric_type v1.ResourceName) *ContainerMetrics {
+func (s *StackDriverClient) getContainerMetrics(container_name string, pod_uid string, duration time.Duration, metric_type v1.ResourceName) *ContainerMetrics {
 
 	var m *ContainerMetrics
 
 	filter := map[string]string{
 		"resource.label.container_name": container_name,
-		"resource.label.pod_id":         string(pod_uid),
+		"resource.label.pod_id":         pod_uid,
 	}
 
 	switch metric_type {
@@ -204,14 +213,59 @@ func (s *StackDriverClient) getContainerMetrics(container_name string, pod_uid t
 	return m
 }
 
-func (s *StackDriverClient) getMetrics(pods []v1.Pod, duration time.Duration, metric_type v1.ResourceName) (metrics []*ContainerMetrics) {
+func (s *StackDriverClient) Run(jobs chan<- *MetricJob, collector <-chan *ContainerMetrics, pods []v1.Pod, duration time.Duration, metric_type v1.ResourceName) (metrics []*ContainerMetrics) {
 
-	for _, pod := range pods {
-		for _, container := range pod.Spec.Containers {
-			m := s.getContainerMetrics(container.Name, pod.ObjectMeta.UID, duration, metric_type)
-			m.PodName = pod.GetName()
-			metrics = append(metrics, m)
+	go func() {
+		for _, pod := range pods {
+			for _, container := range pod.Spec.Containers {
+				jobs <- &MetricJob{
+					ContainerName: container.Name,
+					PodName:       pod.GetName(),
+					PodUID:        string(pod.ObjectMeta.UID),
+					Duration:      duration,
+					MetricType:    metric_type,
+				}
+			}
 		}
+		close(jobs)
+	}()
+
+	for job := range collector {
+		metrics = append(metrics, job)
 	}
+
 	return
+}
+
+func (s *StackDriverClient) Worker(jobs <-chan *MetricJob, collector chan<- *ContainerMetrics) {
+
+	for job := range jobs {
+		m := s.getContainerMetrics(job.ContainerName, job.PodUID, job.Duration, job.MetricType)
+		m.PodName = job.PodName
+		collector <- m
+	}
+
+	close(collector)
+}
+
+func (k *KubeClient) historical(project, namespace string, workers int, resourceName v1.ResourceName, duration time.Duration, sort string, reverse bool) {
+
+	stackDriver := NewStackDriverClient(
+		project,
+	)
+
+	activePods, err := k.getActivePods(namespace, "")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	jobs := make(chan *MetricJob, 5)
+	collector := make(chan *ContainerMetrics)
+
+	for i := 0; i <= workers; i++ {
+		go stackDriver.Worker(jobs, collector)
+	}
+
+	metrics := stackDriver.Run(jobs, collector, activePods, duration, resourceName)
+	PrintContainerMetrics(metrics, resourceName, duration, sort, reverse)
 }

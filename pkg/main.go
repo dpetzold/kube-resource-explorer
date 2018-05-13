@@ -39,6 +39,7 @@ func main() {
 		mem_only   = flag.Bool("mem", false, "show historical memory info")
 		cpu_only   = flag.Bool("cpu", false, "show historical cpu info")
 		project    = flag.String("project", "", "Project id")
+		workers    = flag.Int("workers", 5, "Number of workers for historical")
 		kubeconfig *string
 	)
 
@@ -86,7 +87,7 @@ func main() {
 			panic("Unknown metric type")
 		}
 
-		k.historical(*project, *namespace, resourceName, *duration, *sort, *reverse)
+		k.historical(*project, *namespace, *workers, resourceName, *duration, *sort, *reverse)
 
 	} else {
 
