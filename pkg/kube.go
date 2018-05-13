@@ -166,3 +166,32 @@ func (k *KubeClient) GetClusterCapacity() (capacity api_v1.ResourceList, err err
 
 	return capacity, nil
 }
+
+func (k *KubeClient) resourceUsage(namespace, sort string, reverse bool, csv bool) {
+
+	resources, err := k.GetContainerResources(namespace)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	capacity, err := k.GetClusterCapacity()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	rows := FormatResourceUsage(capacity, resources, sort, reverse)
+
+	if csv {
+		prefix := "kube-resource-usage"
+		if namespace == "" {
+			prefix += "-all"
+		} else {
+			prefix += fmt.Sprintf("-%s", namespace)
+		}
+
+		filename := ExportCSV(prefix, rows)
+		fmt.Printf("Exported %d rows to %s\n", len(rows), filename)
+	} else {
+		PrintResourceUsage(rows)
+	}
+}

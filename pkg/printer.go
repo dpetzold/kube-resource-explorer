@@ -136,14 +136,29 @@ func FormatResourceUsage(capacity v1.ResourceList, resources []*ContainerResourc
 	return rows
 }
 
-func ExportCSVResourceUsage(rows [][]string) {
-	w := csv.NewWriter(os.Stdout)
+func ExportCSV(prefix string, rows [][]string) string {
+
+	now := time.Now()
+
+	filename := fmt.Sprintf("%s-%02d%02d%02d%02d%02d.csv", prefix, now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute())
+
+	f, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	w := csv.NewWriter(f)
 	w.WriteAll(rows)
 
 	if err := w.Error(); err != nil {
 		log.Fatalln("error writing csv:", err)
 	}
 
+	if err := f.Close(); err != nil {
+		panic(err.Error())
+	}
+
+	return filename
 }
 
 func PrintResourceUsage(rows [][]string) {

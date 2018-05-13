@@ -40,6 +40,7 @@ func main() {
 		cpu_only   = flag.Bool("cpu", false, "show historical cpu info")
 		project    = flag.String("project", "", "Project id")
 		workers    = flag.Int("workers", 5, "Number of workers for historical")
+		csv        = flag.Bool("csv", false, "Export results to csv file")
 		kubeconfig *string
 	)
 
@@ -87,7 +88,7 @@ func main() {
 			panic("Unknown metric type")
 		}
 
-		k.historical(*project, *namespace, *workers, resourceName, *duration, *sort, *reverse)
+		k.historical(*project, *namespace, *workers, resourceName, *duration, *sort, *reverse, *csv)
 
 	} else {
 
@@ -98,6 +99,6 @@ func main() {
 			os.Exit(1)
 		}
 
-		k.resourceUsage(*namespace, *sort, *reverse)
+		k.resourceUsage(*namespace, *sort, *reverse, *csv)
 	}
 }
