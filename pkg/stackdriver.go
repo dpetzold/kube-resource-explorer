@@ -10,7 +10,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"golang.org/x/net/context"
@@ -179,13 +178,13 @@ func (s *StackDriverClient) getTimeSeries(filter_map map[string]string, duration
 	return s.client.ListTimeSeries(s.ctx, req)
 }
 
-func (s *StackDriverClient) getContainerMetrics(container_name string, pod_uid types.UID, duration time.Duration, metric_type v1.ResourceName) *ContainerMetrics {
+func (s *StackDriverClient) getContainerMetrics(container_name string, pod_uid string, duration time.Duration, metric_type v1.ResourceName) *ContainerMetrics {
 
 	var m *ContainerMetrics
 
 	filter := map[string]string{
 		"resource.label.container_name": container_name,
-		"resource.label.pod_id":         string(pod_uid),
+		"resource.label.pod_id":         pod_uid,
 	}
 
 	switch metric_type {
@@ -204,14 +203,24 @@ func (s *StackDriverClient) getContainerMetrics(container_name string, pod_uid t
 	return m
 }
 
-func (s *StackDriverClient) getMetrics(pods []v1.Pod, duration time.Duration, metric_type v1.ResourceName) (metrics []*ContainerMetrics) {
+func (s *StackDriverClient) getMetrics(jobs chan *MetricJob, collector chan *ContainerMetrics, pods []v1.Pod, duration time.Duration, metric_type v1.ResourceName) (metrics []*ContainerMetrics) {
 
 	for _, pod := range pods {
 		for _, container := range pod.Spec.Containers {
-			m := s.getContainerMetrics(container.Name, pod.ObjectMeta.UID, duration, metric_type)
-			m.PodName = pod.GetName()
-			metrics = append(metrics, m)
+			jobs <- &MetricJob{
+				ContainerName: container.Name,
+				PodName:       pod.GetName(),
+				PodUID:        string(pod.ObjectMeta.UID),
+				Duration:      duration,
+				MetricType:    metric_type,
+			}
 		}
 	}
+	close(jobs)
+
+	for job := range collector {
+		metrics = append(metrics, job)
+	}
+
 	return
 }
