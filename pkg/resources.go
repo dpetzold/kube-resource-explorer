@@ -55,7 +55,7 @@ func (r *CpuResource) ToQuantity() *resource.Quantity {
 	return resource.NewMilliQuantity(r.MilliValue(), resource.DecimalSI)
 }
 
-type NodeResources struct {
+type ResourceUsage struct {
 	Name          string
 	CpuUsage      *CpuResource
 	PercentCpu    int

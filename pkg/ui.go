@@ -2,11 +2,19 @@ package main
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	ui "github.com/airking05/termui"
 	"github.com/davecgh/go-spew/spew"
 	api_v1 "k8s.io/api/core/v1"
 )
+
+type NodeDisplay struct {
+	Node        api_v1.Node
+	CpuGauge    *ui.Gauge
+	MemoryGauge *ui.Gauge
+}
 
 func EventsWidget(events string) *ui.Par {
 	widget := ui.NewPar(events)
@@ -15,8 +23,8 @@ func EventsWidget(events string) *ui.Par {
 	return widget
 }
 
-func PodsWidget(events string) *ui.Par {
-	widget := ui.NewPar(events)
+func PodsWidget() *ui.List {
+	widget := ui.NewList()
 	widget.Height = 20
 	widget.BorderLabel = "Pods"
 	return widget
@@ -55,12 +63,6 @@ func GaugeWidget(label string, barColor ui.Attribute) *ui.Gauge {
 	return gauge
 }
 
-type NodeDisplay struct {
-	Node        api_v1.Node
-	CpuGauge    *ui.Gauge
-	MemoryGauge *ui.Gauge
-}
-
 func TopInit(k *KubeClient) {
 	if err := ui.Init(); err != nil {
 		panic(err)
@@ -96,7 +98,7 @@ func TopInit(k *KubeClient) {
 	}
 
 	listWidget := ListWidget(node_names)
-	podsWidget := PodsWidget("")
+	podsWidget := PodsWidget()
 	eventsWidget := EventsWidget(events)
 
 	ui.Body.AddRows(
@@ -124,12 +126,41 @@ func TopInit(k *KubeClient) {
 	ui.Handle("/timer/1s", func(e ui.Event) {
 
 		for _, nd := range node_gauges {
-			r, _ := k.NodeResources(&nd.Node)
+			r, _ := k.NodeResourceUsage(&nd.Node)
 			nd.MemoryGauge.Percent = r.PercentMemory
 			nd.MemoryGauge.Label = fmt.Sprintf("%d%% (%s)", r.PercentMemory, r.MemoryUsage.String())
 			nd.CpuGauge.Percent = r.PercentCpu
 			nd.CpuGauge.Label = fmt.Sprintf("%d%% (%s)", r.PercentMemory, r.CpuUsage.String())
 		}
+
+		metrics, err := k.PodResourceUsage("")
+		if err != nil {
+			panic(err.Error())
+		}
+
+		sort.Slice(metrics, func(i, j int) bool {
+			q := metrics[j].CpuUsage.ToQuantity()
+			return metrics[i].CpuUsage.ToQuantity().Cmp(*q) > 0
+		})
+
+		var nmax int
+		for _, m := range metrics {
+			if len(m.Name) > nmax {
+				nmax = len(m.Name)
+			}
+		}
+
+		pods := []string{
+			fmt.Sprintf("Pod/Container%s %4s    %s", strings.Repeat(" ", nmax-len("Pod/Container")), "Cpu", "Memory"),
+			fmt.Sprintf("-------------%s ----    ------", strings.Repeat(" ", nmax-len("Pod/Container"))),
+		}
+
+		for _, m := range metrics {
+			name := fmt.Sprintf("%s%s", m.Name, strings.Repeat(" ", nmax-len(m.Name)))
+			pods = append(pods, fmt.Sprintf("%s %4s    %s\n", name, m.CpuUsage.String(), m.MemoryUsage.String()))
+		}
+
+		podsWidget.Items = pods
 
 		ui.Render(ui.Body)
 	})

@@ -77,7 +77,7 @@ func NodeCapacity(node *api_v1.Node) api_v1.ResourceList {
 }
 
 // Return NodeResources struct for the specified object
-func (k *KubeClient) NodeResources(node *api_v1.Node) (*NodeResources, error) {
+func (k *KubeClient) NodeResourceUsage(node *api_v1.Node) (*ResourceUsage, error) {
 
 	client := metricsutil.DefaultHeapsterMetricsClient(k.clientset.Core())
 
@@ -86,8 +86,8 @@ func (k *KubeClient) NodeResources(node *api_v1.Node) (*NodeResources, error) {
 		return nil, err
 	}
 
-	if len(metricsList.Items) > 1 {
-		return nil, fmt.Errorf("Got >1 results from client.GetNodeMetrics")
+	if len(metricsList.Items) != 1 {
+		return nil, fmt.Errorf("Got bad number of results from client.GetNodeMetrics")
 	}
 
 	metrics := metricsList.Items[0]
@@ -103,13 +103,46 @@ func (k *KubeClient) NodeResources(node *api_v1.Node) (*NodeResources, error) {
 	percentCpu := cpuUsage.calcPercentage(capacity.Cpu())
 	percentMemory := memoryUsage.calcPercentage(capacity.Memory())
 
-	return &NodeResources{
+	return &ResourceUsage{
 		Name:          node.GetName(),
 		CpuUsage:      cpuUsage,
 		PercentCpu:    percentCpu,
 		MemoryUsage:   memoryUsage,
 		PercentMemory: percentMemory,
 	}, nil
+}
+
+func (k *KubeClient) PodResourceUsage(namespace string) ([]*ResourceUsage, error) {
+
+	client := metricsutil.DefaultHeapsterMetricsClient(k.clientset.Core())
+
+	metricsList, err := client.GetPodMetrics("", "", true, labels.Everything())
+	if err != nil {
+		return nil, err
+	}
+
+	var resources []*ResourceUsage
+
+	for _, item := range metricsList.Items {
+
+		for _, metrics := range item.Containers {
+
+			cpuQuantity := metrics.Usage[api_v1.ResourceCPU]
+			memoryQuantity := metrics.Usage[api_v1.ResourceMemory]
+
+			cpuUsage := NewCpuResource(cpuQuantity.MilliValue())
+			memoryUsage := NewMemoryResource(memoryQuantity.Value())
+
+			resources = append(resources, &ResourceUsage{
+				Name:        fmt.Sprintf("%s/%s", item.ObjectMeta.Name, metrics.Name),
+				CpuUsage:    cpuUsage,
+				MemoryUsage: memoryUsage,
+			})
+		}
+
+	}
+
+	return resources, nil
 }
 
 // Return a list of container resources for all containers running on the specified node

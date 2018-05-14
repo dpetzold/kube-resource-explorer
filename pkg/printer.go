@@ -26,13 +26,13 @@ func _cmp(f1, f2 interface{}, reverse bool, field string) bool {
 		return q1.Cmp(*q2) > 0
 	}
 
-	if r1, ok := f1.(*CpuResource); ok {
-		r2 := f2.(*CpuResource)
-		v := r2.ToQuantity()
+	if c1, ok := f1.(*CpuResource); ok {
+		c2 := f2.(*CpuResource)
+		v := c2.ToQuantity()
 		if reverse {
-			return r1.Cmp(*v) < 0
+			return c1.Cmp(*v) < 0
 		}
-		return r1.Cmp(*v) > 0
+		return c1.Cmp(*v) > 0
 	}
 
 	if m1, ok := f1.(*MemoryResource); ok {
