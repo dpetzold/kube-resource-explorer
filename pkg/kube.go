@@ -80,11 +80,6 @@ func NodeCapacity(node *api_v1.Node) api_v1.ResourceList {
 // Return NodeResources struct for the specified object
 func (k *KubeClient) NodeResources(namespace, nodeName string) (resources []*NodeResources, err error) {
 
-	clientset, err := f.ClientSet()
-	if err != nil {
-		return err
-	}
-
 	client := metricsutil.NewHeapsterMetricsClient(
 		k.clientset.Core(),
 		metricsutil.DefaultHeapsterNamespace,
@@ -93,13 +88,13 @@ func (k *KubeClient) NodeResources(namespace, nodeName string) (resources []*Nod
 		metricsutil.DefaultHeapsterPort,
 	)
 
-	metrics, err := o.Client.GetNodeMetrics(o.ResourceName, labels.Everything())
+	metrics, err := client.GetNodeMetrics(nodeName, labels.Everything().String())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	spew.Dump(metrics)
-
+	return nil, nil
 }
 
 // Return a list of container resources for all containers running on the specified node
@@ -161,7 +156,7 @@ func (k *KubeClient) ContainerResources(namespace string) (resources []*Containe
 	}
 
 	for _, node := range nodes.Items {
-		nodeUsage, err := k.NodeResources(namespace, node.GetName())
+		nodeUsage, err := k.NodeContainerResources(namespace, node.GetName())
 		if err != nil {
 			return nil, err
 		}

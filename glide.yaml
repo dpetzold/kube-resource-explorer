@@ -5,26 +5,38 @@ import:
 - package: github.com/davecgh/go-spew/spew
 - package: github.com/airking05/termui
 
-- package: k8s.io/client-go
-  version: HEAD
-
 - package: golang.org/x/text
   version: 7922cc490dd5a7dbaa7fd5d6196b49db59ac042f
 
 - package: cloud.google.com/go/monitoring/apiv3
   version: e9284bade4f43071dac5ec56c73a03a3c9fa7772
 
-- package: k8s.io/apiextensions-apiserver
-  version: 446d16d8d4d1f00727abfb3921438d6e38b5bd6b
+- package: google.golang.org/api/transport/http
+  version: 20530fd5d65ad2caee87891f9896d7547cb400c9
+
+- package: google.golang.org/grpc/metadata
+  version: 45d7f3a23f0b937ba711aa0e3e3426325d3b9ae4
+
+- package: github.com/golang/protobuf/proto
+  version: b4deda0973fb4c70b50d226b1af49f3da59f5265
+
+- package: golang.org/x/oauth2/google
+  version: cdc340f7c179dbbfa4afd43b7614e8fcadde4269
 
 - package: k8s.io/apiserver
-  version: ccacb1b746ca2153b081fe54fe0ff42e9e4d8a28
+  version: kubernetes-1.10.0
 
-- package: k8s.io/apimachinery/pkg/apimachinery
-  version: 090e5ea677675c02a3661f1e107d4376a303ae17
+- package: k8s.io/metrics
+  version: kubernetes-1.10.0
+
+- package: k8s.io/api
+  version: kubernetes-1.10.0
+
+- package: k8s.io/apimachinery
+  version: kubernetes-1.10.0
 
 - package: k8s.io/kubernetes
-  version: e24fd8efb1f18be4b5e94cece61a0183722dd010
+  version: v1.10.0
 
-- package: google.golang.org/api
-  version: 15aea8711db98e640b277da9771a9d74270c2edc
+- package: k8s.io/client-go
+  version: v7.0.0
