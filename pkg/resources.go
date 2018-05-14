@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	humanize "github.com/dustin/go-humanize"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -24,7 +25,8 @@ func (r *MemoryResource) calcPercentage(divisor *resource.Quantity) int {
 
 func (r *MemoryResource) String() string {
 	// XXX: Support more units
-	return fmt.Sprintf("%vMi", r.Value()/(1024*1024))
+	// return fmt.Sprintf("%vMi", r.Value()/(1024*1024))
+	return humanize.Bytes(uint64(r.Value()))
 }
 
 func (r *MemoryResource) ToQuantity() *resource.Quantity {

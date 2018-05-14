@@ -4,6 +4,7 @@ import:
 - package: github.com/ryanuber/columnize
 - package: github.com/davecgh/go-spew/spew
 - package: github.com/airking05/termui
+- package: github.com/dustin/go-humanize
 
 - package: golang.org/x/text
   version: 7922cc490dd5a7dbaa7fd5d6196b49db59ac042f

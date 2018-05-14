@@ -1,5 +1,5 @@
-hash: 85b769bd113d62f0839e18f98b06d9126d804d12e88271d53eb9ea6f496c0b02
-updated: 2018-05-14T10:48:33.175351482-07:00
+hash: ec925068aaebcc8f674808ec91271aaf366b793a9540b6e9ce16acd63ccf31d5
+updated: 2018-05-14T14:34:41.009231067-07:00
 imports:
 - name: cloud.google.com/go
   version: e9284bade4f43071dac5ec56c73a03a3c9fa7772
@@ -18,6 +18,8 @@ imports:
   subpackages:
   - digestset
   - reference
+- name: github.com/dustin/go-humanize
+  version: 02af3965c54e8cacf948b97fef38925c4120652c
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/gogo/protobuf
@@ -162,7 +164,7 @@ imports:
   - socket
   - urlfetch
 - name: google.golang.org/genproto
-  version: 86e600f69ee4704c6efbf6a2a40a5c10700e76c2
+  version: 7bb2a897381c9c5ab2aeb8614f758d7766af68ff
   subpackages:
   - googleapis/api/annotations
   - googleapis/api/distribution

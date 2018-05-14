@@ -55,11 +55,16 @@ type NodeDisplay struct {
 	MemoryGauge *ui.Gauge
 }
 
-func TopInit(k *KubeClient, nodes []api_v1.Node) {
+func TopInit(k *KubeClient) {
 	if err := ui.Init(); err != nil {
 		panic(err)
 	}
 	defer ui.Close()
+
+	nodes, err := k.Nodes()
+	if err != nil {
+		panic(err.Error())
+	}
 
 	node_gauges := make(map[string]*NodeDisplay)
 	var node_names []string

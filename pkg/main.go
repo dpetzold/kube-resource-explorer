@@ -93,16 +93,7 @@ func main() {
 
 	} else if *top {
 
-		nodes, err := k.Nodes()
-		if err != nil {
-			panic(err.Error())
-		}
-
-		for _, node := range nodes {
-			fmt.Println(node.GetName())
-		}
-
-		TopInit(k, nodes)
+		TopInit(k)
 
 	} else {
 
