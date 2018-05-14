@@ -8,12 +8,18 @@ import (
 	api_v1 "k8s.io/api/core/v1"
 )
 
-func EventWidget(events string) *ui.Par {
-	event := ui.NewPar(events)
-	event.Height = 20
-	event.BorderLabel = "Events"
+func EventsWidget(events string) *ui.Par {
+	widget := ui.NewPar(events)
+	widget.Height = 20
+	widget.BorderLabel = "Events"
+	return widget
+}
 
-	return event
+func PodsWidget(events string) *ui.Par {
+	widget := ui.NewPar(events)
+	widget.Height = 20
+	widget.BorderLabel = "Pods"
+	return widget
 }
 
 func ListWidget(labels []string) *ui.List {
@@ -89,14 +95,21 @@ func TopInit(k *KubeClient) {
 		mem_column = append(mem_column, nd.MemoryGauge)
 	}
 
+	listWidget := ListWidget(node_names)
+	podsWidget := PodsWidget("")
+	eventsWidget := EventsWidget(events)
+
 	ui.Body.AddRows(
 		ui.NewRow(
-			ui.NewCol(3, 0, ListWidget(node_names)),
+			ui.NewCol(3, 0, listWidget),
 			ui.NewCol(3, 0, cpu_column...),
 			ui.NewCol(3, 0, mem_column...),
 		),
 		ui.NewRow(
-			ui.NewCol(9, 0, EventWidget(events)),
+			ui.NewCol(9, 0, podsWidget),
+		),
+		ui.NewRow(
+			ui.NewCol(9, 0, eventsWidget),
 		),
 	)
 
@@ -109,19 +122,14 @@ func TopInit(k *KubeClient) {
 	})
 
 	ui.Handle("/timer/1s", func(e ui.Event) {
-		// t := e.Data.(ui.EvtTimer)
-		// i := t.Count
 
 		for _, nd := range node_gauges {
 			r, _ := k.NodeResources(&nd.Node)
 			nd.MemoryGauge.Percent = r.PercentMemory
-			nd.MemoryGauge.Label = "{{percent}}% " + fmt.Sprintf("(%s)", r.MemoryUsage.String())
+			nd.MemoryGauge.Label = fmt.Sprintf("%d%% (%s)", r.PercentMemory, r.MemoryUsage.String())
 			nd.CpuGauge.Percent = r.PercentCpu
-			nd.CpuGauge.Label = "{{percent}}% " + fmt.Sprintf("(%s)", r.CpuUsage.String())
+			nd.CpuGauge.Label = fmt.Sprintf("%d%% (%s)", r.PercentMemory, r.CpuUsage.String())
 		}
-
-		// sp.Lines[0].Data = spdata[:100+i]
-		// lc.Data = sinps[2*i:]
 
 		ui.Render(ui.Body)
 	})
