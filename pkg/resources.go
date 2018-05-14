@@ -53,6 +53,14 @@ func (r *CpuResource) ToQuantity() *resource.Quantity {
 	return resource.NewMilliQuantity(r.MilliValue(), resource.DecimalSI)
 }
 
+type NodeResources struct {
+	Name          string
+	Cpu           *CpuResource
+	PercentCpu    int64
+	Mem           *MemoryResource
+	PercentMemory int64
+}
+
 type ContainerResources struct {
 	Name               string
 	Namespace          string

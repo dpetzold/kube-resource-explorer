@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 
+	"github.com/davecgh/go-spew/spew"
 	api_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/kubernetes/pkg/kubectl/metricsutil"
 )
 
 type KubeClient struct {
@@ -74,8 +77,33 @@ func NodeCapacity(node *api_v1.Node) api_v1.ResourceList {
 	return allocatable
 }
 
+// Return NodeResources struct for the specified object
+func (k *KubeClient) NodeResources(namespace, nodeName string) (resources []*NodeResources, err error) {
+
+	clientset, err := f.ClientSet()
+	if err != nil {
+		return err
+	}
+
+	client := metricsutil.NewHeapsterMetricsClient(
+		k.clientset.Core(),
+		metricsutil.DefaultHeapsterNamespace,
+		metricsutil.DefaultHeapsterService,
+		metricsutil.DefaultHeapsterScheme,
+		metricsutil.DefaultHeapsterPort,
+	)
+
+	metrics, err := o.Client.GetNodeMetrics(o.ResourceName, labels.Everything())
+	if err != nil {
+		return err
+	}
+
+	spew.Dump(metrics)
+
+}
+
 // Return a list of container resources for all containers running on the specified node
-func (k *KubeClient) NodeResources(namespace, nodeName string) (resources []*ContainerResources, err error) {
+func (k *KubeClient) NodeContainerResources(namespace, nodeName string) (resources []*ContainerResources, err error) {
 
 	mc := k.clientset.Core().Nodes()
 	node, err := mc.Get(nodeName, metav1.GetOptions{})

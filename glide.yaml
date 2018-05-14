@@ -1,21 +1,45 @@
 package: github.com/dpetzold/kube-resource-explorer
 import:
-- package: k8s.io/client-go
-  version: v7.0.0
+
 - package: github.com/ryanuber/columnize
 - package: github.com/davecgh/go-spew/spew
 - package: github.com/airking05/termui
-- package: github.com/spf13/cobra
+
+- package: k8s.io/kubernetes
+  version: v1.8.8
+
+- package: k8s.io/api
+  version: 53d615ae3f440f957cb9989d989d597f047262d9
+
+- package: k8s.io/apimachinery/pkg/apimachinery
+  version: 302974c03f7e50f16561ba237db776ab93594ef6
+
+- package: k8s.io/apimachinery/pkg/api/meta
+  version: 302974c03f7e50f16561ba237db776ab93594ef6
+
+- package: k8s.io/apimachinery/pkg/fields
+  version: 302974c03f7e50f16561ba237db776ab93594ef6
+
+- package: k8s.io/client-go
+  version: 9124a4f71a354fe71b93b3f26c1ca16aa04be05f
+
+- package: k8s.io/apimachinery/pkg/runtime
+  version: 302974c03f7e50f16561ba237db776ab93594ef6
 
 - package: golang.org/x/text
   version: 7922cc490dd5a7dbaa7fd5d6196b49db59ac042f
+
 - package: cloud.google.com/go/monitoring/apiv3
   version: e9284bade4f43071dac5ec56c73a03a3c9fa7772
+
 - package: google.golang.org/api/transport/http
   version: 20530fd5d65ad2caee87891f9896d7547cb400c9
+
 - package: google.golang.org/grpc/metadata
   version: 45d7f3a23f0b937ba711aa0e3e3426325d3b9ae4
+
 - package: github.com/golang/protobuf/proto
   version: b4deda0973fb4c70b50d226b1af49f3da59f5265
+
 - package: golang.org/x/oauth2/google
   version: cdc340f7c179dbbfa4afd43b7614e8fcadde4269
