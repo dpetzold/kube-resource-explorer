@@ -25,7 +25,7 @@ func EventsWidget(events string) *ui.Par {
 
 func PodsWidget() *ui.List {
 	widget := ui.NewList()
-	widget.Height = 20
+	widget.Height = 30
 	widget.BorderLabel = "Pods"
 	return widget
 }
@@ -116,7 +116,6 @@ func TopInit(k *KubeClient) {
 	)
 
 	ui.Body.Align()
-
 	ui.Render(ui.Body)
 
 	ui.Handle("/sys/kbd/q", func(ui.Event) {
@@ -130,7 +129,7 @@ func TopInit(k *KubeClient) {
 			nd.MemoryGauge.Percent = r.PercentMemory
 			nd.MemoryGauge.Label = fmt.Sprintf("%d%% (%s)", r.PercentMemory, r.MemoryUsage.String())
 			nd.CpuGauge.Percent = r.PercentCpu
-			nd.CpuGauge.Label = fmt.Sprintf("%d%% (%s)", r.PercentMemory, r.CpuUsage.String())
+			nd.CpuGauge.Label = fmt.Sprintf("%d%% (%s)", r.PercentCpu, r.CpuUsage.String())
 		}
 
 		metrics, err := k.PodResourceUsage("")
