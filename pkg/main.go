@@ -98,6 +98,10 @@ func main() {
 			panic(err.Error())
 		}
 
+		for _, node := range nodes {
+			fmt.Println(node.GetName())
+		}
+
 		TopInit(k, nodes)
 
 	} else {

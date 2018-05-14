@@ -49,30 +49,39 @@ func GaugeWidget(label string, barColor ui.Attribute) *ui.Gauge {
 	return gauge
 }
 
-func TopInit(k *KubeClient, nodes []*api_v1.Node) {
+type NodeDisplay struct {
+	Node        api_v1.Node
+	CpuGauge    *ui.Gauge
+	MemoryGauge *ui.Gauge
+}
+
+func TopInit(k *KubeClient, nodes []api_v1.Node) {
 	if err := ui.Init(); err != nil {
 		panic(err)
 	}
 	defer ui.Close()
 
-	node_gauges := make(map[*api_v1.Node]map[string]*ui.Gauge)
+	node_gauges := make(map[string]*NodeDisplay)
 	var node_names []string
 
 	for _, node := range nodes {
-		node_gauges[node] = make(map[string]*ui.Gauge)
-		node_gauges[node]["cpu"] = GaugeWidget("Cpu", ui.ColorRed)
-		node_gauges[node]["mem"] = GaugeWidget("Mem", ui.ColorCyan)
-		node_names = append(node_names, node.GetName())
+		name := node.GetName()
+		node_gauges[name] = &NodeDisplay{
+			Node:        node,
+			CpuGauge:    GaugeWidget("Cpu", ui.ColorRed),
+			MemoryGauge: GaugeWidget("Mem", ui.ColorCyan),
+		}
+		node_names = append(node_names, name[len(name)-26:])
 	}
 
-	events := spew.Sdump(len(node_gauges))
+	events := spew.Sdump(node_names)
 
 	var cpu_column []ui.GridBufferer
 	var mem_column []ui.GridBufferer
 
-	for _, gauge := range node_gauges {
-		cpu_column = append(cpu_column, gauge["cpu"])
-		mem_column = append(mem_column, gauge["mem"])
+	for _, nd := range node_gauges {
+		cpu_column = append(cpu_column, nd.CpuGauge)
+		mem_column = append(mem_column, nd.MemoryGauge)
 	}
 
 	ui.Body.AddRows(
@@ -98,10 +107,10 @@ func TopInit(k *KubeClient, nodes []*api_v1.Node) {
 		// t := e.Data.(ui.EvtTimer)
 		// i := t.Count
 
-		for node, g := range node_gauges {
-			r, _ := k.NodeResources(node)
-			g["mem"].Percent = r.PercentMemory
-			g["cpu"].Percent = r.PercentCpu
+		for _, nd := range node_gauges {
+			r, _ := k.NodeResources(&nd.Node)
+			nd.MemoryGauge.Percent = r.PercentMemory
+			nd.CpuGauge.Percent = r.PercentCpu
 		}
 
 		// sp.Lines[0].Data = spdata[:100+i]
