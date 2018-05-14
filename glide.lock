@@ -1,5 +1,5 @@
-hash: 41dbfa7d859f3b290459a2b5f9cf47b06f310d23bd36c922c10938bb4a3693ce
-updated: 2018-05-08T16:56:54.627532402-07:00
+hash: e6d1996ad15529babf91522949ba64a16c15a77191d0d0df7c7ceaf2c5d225a2
+updated: 2018-05-13T17:02:18.676324388-07:00
 imports:
 - name: cloud.google.com/go
   version: e9284bade4f43071dac5ec56c73a03a3c9fa7772
@@ -7,6 +7,8 @@ imports:
   - compute/metadata
   - internal/version
   - monitoring/apiv3
+- name: github.com/airking05/termui
+  version: c2850e27cf42f779933255c5ac873f0df1da09fd
 - name: github.com/davecgh/go-spew
   version: 8991bc29aa16c548c550c7ff78260e27b9ab7c73
   subpackages:
@@ -54,7 +56,7 @@ imports:
 - name: github.com/spf13/pflag
   version: 4c012f6dcd9546820e378d0bdda4d8fc772cdfea
 - name: go.opencensus.io
-  version: c11636694056ed1d664b058521f3aa61016da8ba
+  version: 7838e5670888b348b2caf302c8cd862ad0e903f8
   subpackages:
   - exporter/stackdriver/propagation
   - internal
@@ -315,8 +317,4 @@ imports:
   - util/homedir
   - util/integer
   - util/jsonpath
-- name: k8s.io/kubernetes
-  version: a743392937c022a87831227ef152471359fd8d9e
-  subpackages:
-  - pkg/api/v1/resource
 testImports: []
