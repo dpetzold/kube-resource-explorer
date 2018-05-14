@@ -38,14 +38,14 @@ func ListWidget(labels []string) *ui.List {
 func GaugeWidget(label string, barColor ui.Attribute) *ui.Gauge {
 
 	gauge := ui.NewGauge()
-	gauge.BorderLabel = label
-	gauge.Height = 3
-	gauge.Percent = 0
-	gauge.PaddingBottom = 0
 	gauge.BarColor = barColor
 	gauge.BorderFg = ui.ColorWhite
 	gauge.BorderLabelFg = ui.ColorCyan
-
+	gauge.BorderLabel = label
+	gauge.Height = 3
+	gauge.LabelAlign = ui.AlignRight
+	gauge.PaddingBottom = 0
+	gauge.Percent = 0
 	return gauge
 }
 
@@ -110,7 +110,9 @@ func TopInit(k *KubeClient, nodes []api_v1.Node) {
 		for _, nd := range node_gauges {
 			r, _ := k.NodeResources(&nd.Node)
 			nd.MemoryGauge.Percent = r.PercentMemory
+			nd.MemoryGauge.Label = "{{percent}}% " + fmt.Sprintf("(%s)", r.MemoryUsage.String())
 			nd.CpuGauge.Percent = r.PercentCpu
+			nd.CpuGauge.Label = "{{percent}}% " + fmt.Sprintf("(%s)", r.CpuUsage.String())
 		}
 
 		// sp.Lines[0].Data = spdata[:100+i]

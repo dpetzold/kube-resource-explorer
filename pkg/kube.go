@@ -105,9 +105,9 @@ func (k *KubeClient) NodeResources(node *api_v1.Node) (*NodeResources, error) {
 
 	return &NodeResources{
 		Name:          node.GetName(),
-		Cpu:           cpuUsage,
+		CpuUsage:      cpuUsage,
 		PercentCpu:    percentCpu,
-		Mem:           memoryUsage,
+		MemoryUsage:   memoryUsage,
 		PercentMemory: percentMemory,
 	}, nil
 }

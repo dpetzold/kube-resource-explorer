@@ -55,9 +55,9 @@ func (r *CpuResource) ToQuantity() *resource.Quantity {
 
 type NodeResources struct {
 	Name          string
-	Cpu           *CpuResource
+	CpuUsage      *CpuResource
 	PercentCpu    int
-	Mem           *MemoryResource
+	MemoryUsage   *MemoryResource
 	PercentMemory int
 }
 
