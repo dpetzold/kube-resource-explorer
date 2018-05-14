@@ -77,7 +77,7 @@ func cmp(t interface{}, field string, i, j int, reverse bool) bool {
 	panic("Unknown type: cmp")
 }
 
-func fmtPercent(p int64) string {
+func fmtPercent(p int) string {
 	return fmt.Sprintf("%d%%", p)
 }
 

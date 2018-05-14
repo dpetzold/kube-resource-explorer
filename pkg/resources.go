@@ -6,8 +6,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-func calcPercentage(dividend, divisor int64) int64 {
-	return int64(float64(dividend) / float64(divisor) * 100)
+func calcPercentage(dividend, divisor int64) int {
+	return int(float64(dividend) / float64(divisor) * 100)
 }
 
 type MemoryResource struct {
@@ -18,7 +18,7 @@ func NewMemoryResource(value int64) *MemoryResource {
 	return &MemoryResource{resource.NewQuantity(value, resource.BinarySI)}
 }
 
-func (r *MemoryResource) calcPercentage(divisor *resource.Quantity) int64 {
+func (r *MemoryResource) calcPercentage(divisor *resource.Quantity) int {
 	return calcPercentage(r.Value(), divisor.Value())
 }
 
@@ -45,7 +45,7 @@ func (r *CpuResource) String() string {
 	return fmt.Sprintf("%vm", r.MilliValue())
 }
 
-func (r *CpuResource) calcPercentage(divisor *resource.Quantity) int64 {
+func (r *CpuResource) calcPercentage(divisor *resource.Quantity) int {
 	return calcPercentage(r.MilliValue(), divisor.MilliValue())
 }
 
@@ -56,9 +56,9 @@ func (r *CpuResource) ToQuantity() *resource.Quantity {
 type NodeResources struct {
 	Name          string
 	Cpu           *CpuResource
-	PercentCpu    int64
+	PercentCpu    int
 	Mem           *MemoryResource
-	PercentMemory int64
+	PercentMemory int
 }
 
 type ContainerResources struct {
@@ -66,12 +66,12 @@ type ContainerResources struct {
 	Namespace          string
 	CpuReq             *CpuResource
 	CpuLimit           *CpuResource
-	PercentCpuReq      int64
-	PercentCpuLimit    int64
+	PercentCpuReq      int
+	PercentCpuLimit    int
 	MemReq             *MemoryResource
 	MemLimit           *MemoryResource
-	PercentMemoryReq   int64
-	PercentMemoryLimit int64
+	PercentMemoryReq   int
+	PercentMemoryLimit int
 }
 
 func (r ContainerResources) Validate(field string) bool {

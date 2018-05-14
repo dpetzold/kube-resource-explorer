@@ -181,13 +181,19 @@ func (k *KubeClient) ContainerResources(namespace string) (resources []*Containe
 	return resources, nil
 }
 
-func (k *KubeClient) Nodes() ([]api_v1.Node, error) {
-	nodes, err := k.clientset.CoreV1().Nodes().List(metav1.ListOptions{})
+func (k *KubeClient) Nodes() ([]*api_v1.Node, error) {
+	nodeList, err := k.clientset.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	return nodes.Items, nil
+	var nodes []*api_v1.Node
+
+	for _, node := range nodeList.Items {
+		nodes = append(nodes, &node)
+	}
+
+	return nodes, nil
 }
 
 // Return the total cluster capacity as a ResourceList

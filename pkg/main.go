@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -94,20 +93,12 @@ func main() {
 
 	} else if *top {
 
-		nodes, _ := k.Nodes()
-		var names []string
-		for _, node := range nodes {
-			names = append(names, node.GetName())
-		}
-
-		// TopInit(k, names)
-
-		metrics, err := k.NodeResources(&nodes[0])
+		nodes, err := k.Nodes()
 		if err != nil {
 			panic(err.Error())
 		}
 
-		spew.Dump(metrics)
+		TopInit(k, nodes)
 
 	} else {
 

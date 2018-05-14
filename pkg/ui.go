@@ -4,14 +4,16 @@ import (
 	"fmt"
 
 	ui "github.com/airking05/termui"
+	"github.com/davecgh/go-spew/spew"
+	api_v1 "k8s.io/api/core/v1"
 )
 
-func EventWidget() (events *ui.Par) {
-	events = ui.NewPar("<> This row has 3 columns\n<- Widgets can be stacked up like left side\n<- Stacked widgets are treated as a single widget")
-	events.Height = 20
-	events.BorderLabel = "Events"
+func EventWidget(events string) *ui.Par {
+	event := ui.NewPar(events)
+	event.Height = 20
+	event.BorderLabel = "Events"
 
-	return events
+	return event
 }
 
 func ListWidget(labels []string) *ui.List {
@@ -47,19 +49,23 @@ func GaugeWidget(label string, barColor ui.Attribute) *ui.Gauge {
 	return gauge
 }
 
-func TopInit(k *KubeClient, nodes []string) {
+func TopInit(k *KubeClient, nodes []*api_v1.Node) {
 	if err := ui.Init(); err != nil {
 		panic(err)
 	}
 	defer ui.Close()
 
-	node_gauges := make(map[string]map[string]*ui.Gauge)
+	node_gauges := make(map[*api_v1.Node]map[string]*ui.Gauge)
+	var node_names []string
 
 	for _, node := range nodes {
 		node_gauges[node] = make(map[string]*ui.Gauge)
 		node_gauges[node]["cpu"] = GaugeWidget("Cpu", ui.ColorRed)
 		node_gauges[node]["mem"] = GaugeWidget("Mem", ui.ColorCyan)
+		node_names = append(node_names, node.GetName())
 	}
+
+	events := spew.Sdump(len(node_gauges))
 
 	var cpu_column []ui.GridBufferer
 	var mem_column []ui.GridBufferer
@@ -71,12 +77,12 @@ func TopInit(k *KubeClient, nodes []string) {
 
 	ui.Body.AddRows(
 		ui.NewRow(
-			ui.NewCol(3, 0, ListWidget(nodes)),
+			ui.NewCol(3, 0, ListWidget(node_names)),
 			ui.NewCol(3, 0, cpu_column...),
 			ui.NewCol(3, 0, mem_column...),
 		),
 		ui.NewRow(
-			ui.NewCol(9, 0, EventWidget()),
+			ui.NewCol(9, 0, EventWidget(events)),
 		),
 	)
 
@@ -92,13 +98,11 @@ func TopInit(k *KubeClient, nodes []string) {
 		// t := e.Data.(ui.EvtTimer)
 		// i := t.Count
 
-		/*
-			for node, g := range node_gauges {
-				r := k.NodeResources(node)
-				g["mem"].Percent = (g.Percent + 3) % 100
-				g["cpu"].Percent = (g.Percent + 3) % 100
-			}
-		*/
+		for node, g := range node_gauges {
+			r, _ := k.NodeResources(node)
+			g["mem"].Percent = r.PercentMemory
+			g["cpu"].Percent = r.PercentCpu
+		}
 
 		// sp.Lines[0].Data = spdata[:100+i]
 		// lc.Data = sinps[2*i:]
