@@ -74,6 +74,7 @@ func NodeCapacity(node *api_v1.Node) api_v1.ResourceList {
 	return allocatable
 }
 
+// Return a list of container resources for all containers running on the specified node
 func (k *KubeClient) NodeResources(namespace, nodeName string) (resources []*ContainerResources, err error) {
 
 	mc := k.clientset.Core().Nodes()
@@ -124,6 +125,7 @@ func (k *KubeClient) NodeResources(namespace, nodeName string) (resources []*Con
 	return resources, nil
 }
 
+// Return the resources in use by containers in the cluster as list of ContainerResources
 func (k *KubeClient) ContainerResources(namespace string) (resources []*ContainerResources, err error) {
 	nodes, err := k.clientset.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
@@ -141,7 +143,18 @@ func (k *KubeClient) ContainerResources(namespace string) (resources []*Containe
 	return resources, nil
 }
 
+func (k *KubeClient) Nodes() ([]api_v1.Node, error) {
+	nodes, err := k.clientset.CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return nodes.Items, nil
+}
+
+// Return the total cluster capacity as a ResourceList
 func (k *KubeClient) ClusterCapacity() (capacity api_v1.ResourceList, err error) {
+
 	nodes, err := k.clientset.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -167,6 +180,7 @@ func (k *KubeClient) ClusterCapacity() (capacity api_v1.ResourceList, err error)
 	return capacity, nil
 }
 
+// Driver for the resource usage command
 func (k *KubeClient) ResourceUsage(namespace, sort string, reverse bool, csv bool) {
 
 	resources, err := k.ContainerResources(namespace)

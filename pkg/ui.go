@@ -1,9 +1,3 @@
-// Copyright 2017 Zack Guo <zack.y.guo@gmail.com>. All rights reserved.
-// Use of this source code is governed by a MIT license that can
-// be found in the LICENSE file.
-
-// +build ignore
-
 package main
 
 import (
@@ -34,7 +28,7 @@ func ListWidget(labels []string) *ui.List {
 	list := ui.NewList()
 	list.Border = false
 	list.Items = items
-	list.Height = 8
+	list.Height = len(labels) * 3
 
 	return list
 }
@@ -53,27 +47,33 @@ func GaugeWidget(label string, barColor ui.Attribute) *ui.Gauge {
 	return gauge
 }
 
-func main() {
+func TopInit(nodes []string) {
 	if err := ui.Init(); err != nil {
 		panic(err)
 	}
 	defer ui.Close()
 
-	gs := make([]*ui.Gauge, 6)
+	node_gauges := make(map[string]map[string]*ui.Gauge)
 
-	for i := 0; i < 3; i++ {
-		gs[i] = GaugeWidget("Cpu", ui.ColorRed)
+	for _, node := range nodes {
+		node_gauges[node] = make(map[string]*ui.Gauge)
+		node_gauges[node]["cpu"] = GaugeWidget("Cpu", ui.ColorRed)
+		node_gauges[node]["mem"] = GaugeWidget("Mem", ui.ColorCyan)
 	}
 
-	for i := 3; i < 6; i++ {
-		gs[i] = GaugeWidget("Mem", ui.ColorCyan)
+	var cpu_column []ui.GridBufferer
+	var mem_column []ui.GridBufferer
+
+	for _, gauge := range node_gauges {
+		cpu_column = append(cpu_column, gauge["cpu"])
+		mem_column = append(mem_column, gauge["mem"])
 	}
 
 	ui.Body.AddRows(
 		ui.NewRow(
-			ui.NewCol(3, 0, ListWidget([]string{"node1", "node2", "node3"})),
-			ui.NewCol(3, 0, gs[0], gs[1], gs[2]),
-			ui.NewCol(3, 0, gs[3], gs[4], gs[5]),
+			ui.NewCol(3, 0, ListWidget(nodes)),
+			ui.NewCol(3, 0, cpu_column...),
+			ui.NewCol(3, 0, mem_column...),
 		),
 		ui.NewRow(
 			ui.NewCol(9, 0, EventWidget()),
@@ -92,9 +92,11 @@ func main() {
 		// t := e.Data.(ui.EvtTimer)
 		// i := t.Count
 
-		for _, g := range gs {
-			g.Percent = (g.Percent + 3) % 100
-		}
+		/*
+			for _, g := range gs {
+				g.Percent = (g.Percent + 3) % 100
+			}
+		*/
 
 		// sp.Lines[0].Data = spdata[:100+i]
 		// lc.Data = sinps[2*i:]

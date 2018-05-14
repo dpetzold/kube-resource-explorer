@@ -41,6 +41,7 @@ func main() {
 		project    = flag.String("project", "", "Project id")
 		workers    = flag.Int("workers", 5, "Number of workers for historical")
 		csv        = flag.Bool("csv", false, "Export results to csv file")
+		top        = flag.Bool("top", false, "Top command")
 		kubeconfig *string
 	)
 
@@ -89,6 +90,16 @@ func main() {
 		}
 
 		k.Historical(*project, *namespace, *workers, resourceName, *duration, *sort, *reverse, *csv)
+
+	} else if *top {
+
+		nodes, _ := k.Nodes()
+		var names []string
+		for _, node := range nodes {
+			names = append(names, node.GetName())
+		}
+
+		TopInit(names)
 
 	} else {
 
