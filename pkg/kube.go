@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 
-	"github.com/davecgh/go-spew/spew"
 	api_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -78,23 +77,39 @@ func NodeCapacity(node *api_v1.Node) api_v1.ResourceList {
 }
 
 // Return NodeResources struct for the specified object
-func (k *KubeClient) NodeResources(namespace, nodeName string) (resources []*NodeResources, err error) {
+func (k *KubeClient) NodeResources(node *api_v1.Node) (*NodeResources, error) {
 
-	client := metricsutil.NewHeapsterMetricsClient(
-		k.clientset.Core(),
-		metricsutil.DefaultHeapsterNamespace,
-		metricsutil.DefaultHeapsterService,
-		metricsutil.DefaultHeapsterScheme,
-		metricsutil.DefaultHeapsterPort,
-	)
+	client := metricsutil.DefaultHeapsterMetricsClient(k.clientset.Core())
 
-	metrics, err := client.GetNodeMetrics(nodeName, labels.Everything().String())
+	metricsList, err := client.GetNodeMetrics(node.GetName(), labels.Everything().String())
 	if err != nil {
 		return nil, err
 	}
 
-	spew.Dump(metrics)
-	return nil, nil
+	if len(metricsList.Items) > 1 {
+		return nil, fmt.Errorf("Got >1 results from client.GetNodeMetrics")
+	}
+
+	metrics := metricsList.Items[0]
+
+	capacity := NodeCapacity(node)
+
+	cpuQuantity := metrics.Usage[api_v1.ResourceCPU]
+	memoryQuantity := metrics.Usage[api_v1.ResourceMemory]
+
+	cpuUsage := NewCpuResource(cpuQuantity.MilliValue())
+	memoryUsage := NewMemoryResource(memoryQuantity.Value())
+
+	percentCpu := cpuUsage.calcPercentage(capacity.Cpu())
+	percentMemory := memoryUsage.calcPercentage(capacity.Memory())
+
+	return &NodeResources{
+		Name:          node.GetName(),
+		Cpu:           cpuUsage,
+		PercentCpu:    percentCpu,
+		Mem:           memoryUsage,
+		PercentMemory: percentMemory,
+	}, nil
 }
 
 // Return a list of container resources for all containers running on the specified node

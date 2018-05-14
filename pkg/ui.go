@@ -47,7 +47,7 @@ func GaugeWidget(label string, barColor ui.Attribute) *ui.Gauge {
 	return gauge
 }
 
-func TopInit(nodes []string) {
+func TopInit(k *KubeClient, nodes []string) {
 	if err := ui.Init(); err != nil {
 		panic(err)
 	}
@@ -93,8 +93,10 @@ func TopInit(nodes []string) {
 		// i := t.Count
 
 		/*
-			for _, g := range gs {
-				g.Percent = (g.Percent + 3) % 100
+			for node, g := range node_gauges {
+				r := k.NodeResources(node)
+				g["mem"].Percent = (g.Percent + 3) % 100
+				g["cpu"].Percent = (g.Percent + 3) % 100
 			}
 		*/
 
