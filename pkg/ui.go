@@ -14,7 +14,7 @@ import (
 
 func EventWidget() (events *ui.Par) {
 	events = ui.NewPar("<> This row has 3 columns\n<- Widgets can be stacked up like left side\n<- Stacked widgets are treated as a single widget")
-	events.Height = 10
+	events.Height = 20
 	events.BorderLabel = "Events"
 
 	return events
