@@ -280,3 +280,13 @@ func (k *KubeClient) ResourceUsage(namespace, sort string, reverse bool, csv boo
 		PrintResourceUsage(rows)
 	}
 }
+
+func (k *KubeClient) Events(namespace string) ([]api_v1.Event, error) {
+
+	events, err := k.clientset.Core().Events(namespace).List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return events.Items, nil
+}

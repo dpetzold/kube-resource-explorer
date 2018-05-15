@@ -3,10 +3,11 @@ package main
 import (
 	"fmt"
 	"sort"
+	"time"
 
 	ui "github.com/airking05/termui"
-	"github.com/davecgh/go-spew/spew"
 	api_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/duration"
 )
 
 type NodeDisplay struct {
@@ -15,10 +16,14 @@ type NodeDisplay struct {
 	MemoryGauge *ui.Gauge
 }
 
-func EventsWidget(events string) *ui.Par {
-	w := ui.NewPar(events)
+func EventsWidget() *ui.Table {
+	w := ui.NewTable()
 	w.Height = 20
 	w.BorderLabel = "Events"
+	w.TextAlign = ui.AlignLeft
+	w.Separator = false
+	w.Analysis()
+	w.SetSize()
 	return w
 }
 
@@ -89,8 +94,6 @@ func TopInit(k *KubeClient) {
 		node_names = append(node_names, name[len(name)-26:])
 	}
 
-	events := spew.Sdump(node_names)
-
 	var cpu_column []ui.GridBufferer
 	var mem_column []ui.GridBufferer
 
@@ -101,7 +104,7 @@ func TopInit(k *KubeClient) {
 
 	listWidget := ListWidget(node_names)
 	podsWidget := PodsWidget()
-	eventsWidget := EventsWidget(events)
+	eventsWidget := EventsWidget()
 
 	ui.Body.AddRows(
 		ui.NewRow(
@@ -160,12 +163,41 @@ func TopInit(k *KubeClient) {
 			pods = append(pods, []string{m.Name, m.CpuUsage.String(), m.MemoryUsage.String()})
 		}
 
-		podsWidget.Rows = pods
+		podsWidget.Rows = pods[0:28]
 		podsWidget.Analysis()
 		podsWidget.SetSize()
 
-		ui.Body.Align()
+		eventRows := [][]string{
+			[]string{"Last Seen", "Count", "Name", "Kind", "Type", "Reason", "Message"},
+			[]string{"", "", "", "", "", "", ""},
+		}
 
+		events, err := k.Events("")
+		if err != nil {
+			panic(err.Error())
+		}
+
+		for _, e := range events {
+			eventRows = append(eventRows, []string{
+				duration.ShortHumanDuration(time.Now().Sub(e.LastTimestamp.Time)),
+				fmt.Sprintf("%d", e.Count),
+				e.ObjectMeta.Name[0:20],
+				e.InvolvedObject.Kind,
+				e.Type,
+				e.Reason,
+				e.Message,
+			})
+		}
+
+		if len(eventRows) > 18 {
+			eventRows = eventRows[0:18]
+		}
+
+		eventsWidget.Rows = eventRows
+		eventsWidget.Analysis()
+		eventsWidget.SetSize()
+
+		ui.Body.Align()
 		ui.Render(ui.Body)
 	})
 
