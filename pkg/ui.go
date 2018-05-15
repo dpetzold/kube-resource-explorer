@@ -41,10 +41,10 @@ func PodsWidget() *ui.Table {
 func ListWidget(labels []string) *ui.List {
 
 	var items []string
-	for i, label := range labels {
+	for _, label := range labels {
 		items = append(items, []string{
 			"",
-			fmt.Sprintf("[%d] %s", i+1, label),
+			fmt.Sprintf("    %s", label),
 			"",
 		}...)
 	}
@@ -91,7 +91,7 @@ func TopInit(k *KubeClient) {
 			CpuGauge:    GaugeWidget("Cpu", ui.ColorRed),
 			MemoryGauge: GaugeWidget("Mem", ui.ColorCyan),
 		}
-		node_names = append(node_names, name[len(name)-26:])
+		node_names = append(node_names, name)
 	}
 
 	var cpu_column []ui.GridBufferer
@@ -108,15 +108,15 @@ func TopInit(k *KubeClient) {
 
 	ui.Body.AddRows(
 		ui.NewRow(
-			ui.NewCol(3, 0, listWidget),
-			ui.NewCol(3, 0, cpu_column...),
-			ui.NewCol(3, 0, mem_column...),
+			ui.NewCol(4, 0, listWidget),
+			ui.NewCol(4, 0, cpu_column...),
+			ui.NewCol(4, 0, mem_column...),
 		),
 		ui.NewRow(
-			ui.NewCol(9, 0, podsWidget),
+			ui.NewCol(12, 0, podsWidget),
 		),
 		ui.NewRow(
-			ui.NewCol(9, 0, eventsWidget),
+			ui.NewCol(12, 0, eventsWidget),
 		),
 	)
 
