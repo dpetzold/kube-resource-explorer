@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"sort"
-	"strings"
 
 	ui "github.com/airking05/termui"
 	"github.com/davecgh/go-spew/spew"
@@ -17,17 +16,21 @@ type NodeDisplay struct {
 }
 
 func EventsWidget(events string) *ui.Par {
-	widget := ui.NewPar(events)
-	widget.Height = 20
-	widget.BorderLabel = "Events"
-	return widget
+	w := ui.NewPar(events)
+	w.Height = 20
+	w.BorderLabel = "Events"
+	return w
 }
 
-func PodsWidget() *ui.List {
-	widget := ui.NewList()
-	widget.Height = 30
-	widget.BorderLabel = "Pods"
-	return widget
+func PodsWidget() *ui.Table {
+	w := ui.NewTable()
+	w.Height = 30
+	w.BorderLabel = "Pods"
+	w.TextAlign = ui.AlignLeft
+	w.Separator = false
+	w.Analysis()
+	w.SetSize()
+	return w
 }
 
 func ListWidget(labels []string) *ui.List {
@@ -41,26 +44,25 @@ func ListWidget(labels []string) *ui.List {
 		}...)
 	}
 
-	list := ui.NewList()
-	list.Border = false
-	list.Items = items
-	list.Height = len(labels) * 3
-
-	return list
+	w := ui.NewList()
+	w.Border = false
+	w.Items = items
+	w.Height = len(labels) * 3
+	return w
 }
 
 func GaugeWidget(label string, barColor ui.Attribute) *ui.Gauge {
 
-	gauge := ui.NewGauge()
-	gauge.BarColor = barColor
-	gauge.BorderFg = ui.ColorWhite
-	gauge.BorderLabelFg = ui.ColorCyan
-	gauge.BorderLabel = label
-	gauge.Height = 3
-	gauge.LabelAlign = ui.AlignRight
-	gauge.PaddingBottom = 0
-	gauge.Percent = 0
-	return gauge
+	w := ui.NewGauge()
+	w.BarColor = barColor
+	w.BorderFg = ui.ColorWhite
+	w.BorderLabelFg = ui.ColorCyan
+	w.BorderLabel = label
+	w.Height = 3
+	w.LabelAlign = ui.AlignRight
+	w.PaddingBottom = 0
+	w.Percent = 0
+	return w
 }
 
 func TopInit(k *KubeClient) {
@@ -149,17 +151,20 @@ func TopInit(k *KubeClient) {
 			}
 		}
 
-		pods := []string{
-			fmt.Sprintf("Pod/Container%s %4s    %s", strings.Repeat(" ", nmax-len("Pod/Container")), "Cpu", "Memory"),
-			fmt.Sprintf("-------------%s ----    ------", strings.Repeat(" ", nmax-len("Pod/Container"))),
+		pods := [][]string{
+			[]string{"Pod/Container", "Cpu", "Memory"},
+			[]string{"", "", ""},
 		}
 
 		for _, m := range metrics {
-			name := fmt.Sprintf("%s%s", m.Name, strings.Repeat(" ", nmax-len(m.Name)))
-			pods = append(pods, fmt.Sprintf("%s %4s    %s\n", name, m.CpuUsage.String(), m.MemoryUsage.String()))
+			pods = append(pods, []string{m.Name, m.CpuUsage.String(), m.MemoryUsage.String()})
 		}
 
-		podsWidget.Items = pods
+		podsWidget.Rows = pods
+		podsWidget.Analysis()
+		podsWidget.SetSize()
+
+		ui.Body.Align()
 
 		ui.Render(ui.Body)
 	})
