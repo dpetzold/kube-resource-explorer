@@ -36,10 +36,18 @@ information:
 https://cloud.google.com/monitoring/docs/reference/libraries
 
 
-## Build
-
+## Run
 ```
-$ make build
+docker run -it \
+    -v${HOME}/.kube:/.kube \
+    -v${HOME}/.config/gcloud:/.config/gcloud \
+    -v/etc/ssl/certs:/etc/ssl/certs \
+    dpetzold/kube-resource-explorer
+```
+
+## Build
+```
+go get github.com/dpetzold/kube-resource-explorer/cmd/kube-resource-explorer
 ```
 
 ## Example output
@@ -52,7 +60,7 @@ cpu is requested. For memory the mode is displayed (mode is the most common
 occurring value in the set).
 
 ```
-$ ./resource-explorer -historical -duration 4h -mem -sort MemoryMode -reverse -namespace kube-system -project myprojectid
+$ kube-resource-explorer -historical -duration 4h -mem -sort MemoryMode -reverse -namespace kube-system -project myprojectid
 Pod/Container                                                     Last    Min     Max     Mode
 -------------------------------------------------------------     ------  ------  ------  --------
 l7-default-backend-1044750973-kqh98/default-http-backend          2Mi     2Mi     2Mi     2Mi
@@ -80,7 +88,7 @@ Results shown are for a period of 4h0m0s. 2,400 data points were evaluted.
 ```
 
 ```
-$ ./resource-explorer -historical -duration 4h -cpu -sort CpuMax -reverse -namespace kube-system -project myproj
+$ kube-resource-explorer -historical -duration 4h -cpu -sort CpuMax -reverse -namespace kube-system -project myproj
 ectid
 Pod/Container                                                     Last    Min     Max     Avg
 -------------------------------------------------------------     ------  ------  ------  --------                                     
@@ -112,7 +120,7 @@ Show aggregate resource requests and limits. This is the same information
 displayed by `kubectl describe nodes` but in a easier to view format. 
 
 ```
-$ ./resource-explorer -namespace kube-system -reverse -sort MemReq
+$ kube-resource-explorer -namespace kube-system -reverse -sort MemReq
 Namespace    Name                                                              CpuReq       CpuReq%  CpuLimit    CpuLimit%  MemReq         MemReq%  MemLimit       MemLimit%
 ---------    ----                                                              ------       -------  --------    ---------  ------         -------  --------       ---------
 kube-system  kube-proxy-gke-project-default-pool-175a4a05-bv59/kube-proxy      100m         10%      0m          0%         0Mi            0%       0Mi            0%
