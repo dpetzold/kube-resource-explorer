@@ -1,4 +1,4 @@
-package main
+package kube
 
 import (
 	"encoding/csv"
@@ -67,11 +67,11 @@ func _cmp(f1, f2 interface{}, reverse bool, field string) bool {
 func cmp(t interface{}, field string, i, j int, reverse bool) bool {
 
 	if ra, ok := t.([]*ContainerResources); ok {
-		return _cmp(getField(ra[i], field), getField(ra[j], field), reverse, field)
+		return _cmp(GetField(ra[i], field), GetField(ra[j], field), reverse, field)
 	}
 
 	if cm, ok := t.([]*ContainerMetrics); ok {
-		return _cmp(getField(cm[i], field), getField(cm[j], field), reverse, field)
+		return _cmp(GetField(cm[i], field), GetField(cm[j], field), reverse, field)
 	}
 
 	panic("Unknown type: cmp")

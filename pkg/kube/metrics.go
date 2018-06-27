@@ -1,4 +1,4 @@
-package main
+package kube
 
 import (
 	"k8s.io/api/core/v1"
@@ -24,7 +24,7 @@ type ContainerMetrics struct {
 }
 
 func (m ContainerMetrics) Validate(field string) bool {
-	for _, v := range getFields(&m) {
+	for _, v := range GetFields(&m) {
 		if field == v {
 			return true
 		}

@@ -1,4 +1,4 @@
-package main
+package kube
 
 import (
 	"fmt"
@@ -67,7 +67,7 @@ type ContainerResources struct {
 }
 
 func (r ContainerResources) Validate(field string) bool {
-	for _, v := range getFields(&r) {
+	for _, v := range GetFields(&r) {
 		if field == v {
 			return true
 		}

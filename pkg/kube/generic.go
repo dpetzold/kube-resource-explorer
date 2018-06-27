@@ -1,8 +1,8 @@
-package main
+package kube
 
 import "reflect"
 
-func getFields(r interface{}) []string {
+func GetFields(r interface{}) []string {
 	var fields []string
 
 	s := reflect.ValueOf(r).Elem()
@@ -14,7 +14,7 @@ func getFields(r interface{}) []string {
 	return fields
 }
 
-func getField(r interface{}, field string) interface{} {
+func GetField(r interface{}, field string) interface{} {
 	v := reflect.ValueOf(r)
 	f := reflect.Indirect(v).FieldByName(field)
 	return f.Interface()

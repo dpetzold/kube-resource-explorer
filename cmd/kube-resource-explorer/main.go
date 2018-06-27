@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dpetzold/kube-resource-explorer/pkg/kube"
+
 	"k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -62,7 +64,7 @@ func main() {
 		panic(err.Error())
 	}
 
-	k := NewKubeClient(clientset)
+	k := kube.NewKubeClient(clientset)
 
 	if *historical {
 
@@ -71,10 +73,10 @@ func main() {
 			os.Exit(1)
 		}
 
-		m := ContainerMetrics{}
+		m := kube.ContainerMetrics{}
 
 		if !m.Validate(*sort) {
-			fmt.Printf("\"%s\" is not a valid field. Possible values are:\n\n%s\n", *sort, strings.Join(getFields(&m), ", "))
+			fmt.Printf("\"%s\" is not a valid field. Possible values are:\n\n%s\n", *sort, strings.Join(kube.GetFields(&m), ", "))
 			os.Exit(1)
 		}
 
@@ -92,10 +94,10 @@ func main() {
 
 	} else {
 
-		r := ContainerResources{}
+		r := kube.ContainerResources{}
 
 		if !r.Validate(*sort) {
-			fmt.Printf("\"%s\" is not a valid field. Possible values are:\n\n%s\n", *sort, strings.Join(getFields(r), ", "))
+			fmt.Printf("\"%s\" is not a valid field. Possible values are:\n\n%s\n", *sort, strings.Join(kube.GetFields(r), ", "))
 			os.Exit(1)
 		}
 
