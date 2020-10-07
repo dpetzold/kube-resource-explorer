@@ -33,7 +33,7 @@ func main() {
 	}
 
 	var (
-		namespace  = flag.String("namespace", "default", "filter by namespace (defaults to all)")
+		namespace  = flag.String("namespace", "", "filter by namespace (defaults to all)")
 		sort       = flag.String("sort", "CpuReq", "field to sort by")
 		reverse    = flag.Bool("reverse", false, "reverse sort output")
 		historical = flag.Bool("historical", false, "show historical info")
